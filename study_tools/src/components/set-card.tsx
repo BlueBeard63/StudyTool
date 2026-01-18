@@ -14,7 +14,7 @@ interface SetCardProps {
 
 export function SetCard({ set }: SetCardProps) {
   return (
-    <Link to={`/sets/${set.id}/study`}>
+    <Link to={`/sets/${set.id}`}>
       <Card className="cursor-pointer transition-all hover:ring-2 hover:ring-primary/50">
         <CardHeader>
           <CardTitle>{set.name}</CardTitle>
