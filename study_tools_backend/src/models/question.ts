@@ -74,3 +74,22 @@ export function createMany(
 
   return insertMany(questions)
 }
+
+export function update(
+  id: string,
+  question: string,
+  answer: string
+): Question | null {
+  const stmt = db.prepare(
+    "UPDATE questions SET question = ?, answer = ? WHERE id = ?"
+  )
+  const result = stmt.run(question, answer, id)
+  if (result.changes === 0) return null
+  return getById(id)
+}
+
+export function deleteById(id: string): boolean {
+  const stmt = db.prepare("DELETE FROM questions WHERE id = ?")
+  const result = stmt.run(id)
+  return result.changes > 0
+}

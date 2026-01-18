@@ -28,4 +28,35 @@ router.get("/:id/stats", (req: Request<IdParams>, res: Response) => {
   })
 })
 
+// PUT /api/questions/:id - Update a question
+router.put("/:id", (req: Request<IdParams>, res: Response) => {
+  const { question, answer } = req.body
+
+  if (!question || typeof question !== "string" || question.trim() === "") {
+    res.status(400).json({ error: "question is required" })
+    return
+  }
+  if (!answer || typeof answer !== "string" || answer.trim() === "") {
+    res.status(400).json({ error: "answer is required" })
+    return
+  }
+
+  const updated = Question.update(req.params.id, question.trim(), answer.trim())
+  if (!updated) {
+    res.status(404).json({ error: "Question not found" })
+    return
+  }
+  res.json(updated)
+})
+
+// DELETE /api/questions/:id - Delete a question
+router.delete("/:id", (req: Request<IdParams>, res: Response) => {
+  const deleted = Question.deleteById(req.params.id)
+  if (!deleted) {
+    res.status(404).json({ error: "Question not found" })
+    return
+  }
+  res.status(204).send()
+})
+
 export default router
