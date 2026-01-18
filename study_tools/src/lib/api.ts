@@ -30,3 +30,16 @@ export async function createSet(input: CreateSetInput): Promise<QuestionSet> {
   }
   return res.json()
 }
+
+export interface Question {
+  id: string
+  setId: string
+  question: string
+  answer: string
+}
+
+export async function fetchQuestions(setId: string): Promise<Question[]> {
+  const res = await fetch(`${API_BASE}/sets/${setId}/questions`)
+  if (!res.ok) throw new Error("Failed to fetch questions")
+  return res.json()
+}
