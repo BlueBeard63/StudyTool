@@ -1,49 +1,70 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Link, useParams } from "react-router"
+import { Link, useNavigate, useParams } from "react-router"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { FillInBlank } from "@/components/fill-in-blank"
+import { ScoreDot } from "@/components/score-dot"
+import { SessionSummary } from "@/components/session-summary"
 import {
   fetchQuestions,
   fetchQuestionStats,
+  fetchSet,
   recordAttempt,
   type Question,
+  type QuestionSet,
 } from "@/lib/api"
-import { ScoreDot } from "@/components/score-dot"
-import { cn } from "@/lib/utils"
 import { countBlanks, getCorrectAnswers, tokenizeAndBlank } from "@/lib/blanking"
 import { checkAnswers, type CheckResult } from "@/lib/checking"
+import {
+  createInitialSession,
+  type QuestionResult,
+  type SessionState,
+} from "@/lib/session"
+import { cn } from "@/lib/utils"
 
 export function StudyPage() {
   const { setId } = useParams<{ setId: string }>()
+  const navigate = useNavigate()
+
+  // Data state
+  const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [values, setValues] = useState<string[]>([])
+  const [scores, setScores] = useState<Record<string, number | null>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Session state
+  const [session, setSession] = useState<SessionState>(createInitialSession)
+
+  // Per-question UI state
+  const [values, setValues] = useState<string[]>([])
   const [submitted, setSubmitted] = useState(false)
   const [results, setResults] = useState<CheckResult | null>(null)
-  const [scores, setScores] = useState<Record<string, number | null>>({})
 
-  // Current question
-  const currentQuestion = questions[currentIndex]
+  // Derived state
+  const currentQuestion = questions[session.currentIndex]
 
-  // Tokenize current answer (memoized to keep blanks stable)
   const tokens = useMemo(() => {
     if (!currentQuestion) return []
     return tokenizeAndBlank(currentQuestion.answer)
   }, [currentQuestion])
 
-  // Get correct answers for comparison
   const correctAnswers = useMemo(() => getCorrectAnswers(tokens), [tokens])
 
-  // Fetch questions and scores on mount
+  // Fetch set and questions on mount
   useEffect(() => {
     if (!setId) return
 
-    fetchQuestions(setId)
-      .then(async (qs) => {
+    Promise.all([fetchSet(setId), fetchQuestions(setId)])
+      .then(async ([set, qs]) => {
+        setQuestionSet(set)
         setQuestions(qs)
 
         // Fetch scores for all questions in parallel
@@ -65,13 +86,17 @@ export function StudyPage() {
       })
   }, [setId])
 
-  // Reset values when question changes
+  // Reset question UI state when question changes
   useEffect(() => {
     const numBlanks = countBlanks(tokens)
     setValues(new Array(numBlanks).fill(""))
     setSubmitted(false)
     setResults(null)
   }, [tokens])
+
+  const handleStart = useCallback(() => {
+    setSession((prev) => ({ ...prev, status: "in-progress" }))
+  }, [])
 
   const handleChange = useCallback((blankIndex: number, value: string) => {
     setValues((prev) => {
@@ -86,31 +111,65 @@ export function StudyPage() {
     setResults(checkResult)
     setSubmitted(true)
 
-    // Record attempt: correct if ≥50% of blanks are right
     const isCorrect = checkResult.score >= 0.5
+
+    // Record to session
+    const questionResult: QuestionResult = {
+      questionId: currentQuestion.id,
+      question: currentQuestion.question,
+      correct: isCorrect,
+      score: checkResult.score,
+      userAnswers: values,
+      correctAnswers,
+    }
+
+    setSession((prev) => {
+      const newResults = [...prev.results, questionResult]
+      const newCorrectCount = prev.correctCount + (isCorrect ? 1 : 0)
+      const newTotal =
+        newResults.reduce((sum, r) => sum + r.score, 0) / newResults.length
+
+      return {
+        ...prev,
+        questionsAnswered: prev.questionsAnswered + 1,
+        correctCount: newCorrectCount,
+        totalScore: newTotal,
+        results: newResults,
+      }
+    })
+
+    // Record to backend
     try {
       await recordAttempt(currentQuestion.id, isCorrect)
-      // Refresh the score for this question
       const stats = await fetchQuestionStats(currentQuestion.id)
       setScores((prev) => ({ ...prev, [currentQuestion.id]: stats.score }))
     } catch (e) {
-      // Silent failure - don't block UX for tracking
       console.error("Failed to record attempt:", e)
     }
   }, [values, correctAnswers, currentQuestion])
 
   const handleNext = useCallback(() => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((i) => i + 1)
+    if (session.currentIndex < questions.length - 1) {
+      setSession((prev) => ({ ...prev, currentIndex: prev.currentIndex + 1 }))
+    } else {
+      setSession((prev) => ({ ...prev, status: "completed" }))
     }
-  }, [currentIndex, questions.length])
+  }, [session.currentIndex, questions.length])
 
+  const handleRetry = useCallback(() => {
+    setSession(createInitialSession())
+  }, [])
+
+  const handleBack = useCallback(() => {
+    navigate("/")
+  }, [navigate])
+
+  // Loading state
   if (loading) {
-    return (
-      <div className="text-muted-foreground">Loading questions...</div>
-    )
+    return <div className="text-muted-foreground">Loading questions...</div>
   }
 
+  // Error state
   if (error) {
     return (
       <div className="space-y-4">
@@ -122,6 +181,7 @@ export function StudyPage() {
     )
   }
 
+  // Empty set
   if (questions.length === 0) {
     return (
       <div className="space-y-4">
@@ -133,6 +193,48 @@ export function StudyPage() {
     )
   }
 
+  // Session not started - show start screen
+  if (session.status === "not-started") {
+    return (
+      <div className="space-y-6">
+        <Link to="/">
+          <Button variant="ghost" size="sm">
+            ← Back
+          </Button>
+        </Link>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{questionSet?.name ?? "Study Set"}</CardTitle>
+            <CardDescription>{questions.length} questions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={handleStart} size="lg">
+              Start Studying
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Session completed - show summary
+  if (session.status === "completed") {
+    return (
+      <div className="space-y-6">
+        <SessionSummary
+          session={session}
+          setName={questionSet?.name ?? "Study Set"}
+          onRetry={handleRetry}
+          onBack={handleBack}
+        />
+      </div>
+    )
+  }
+
+  // Session in progress - show question
+  const isLastQuestion = session.currentIndex >= questions.length - 1
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -143,26 +245,31 @@ export function StudyPage() {
         </Link>
         <div className="flex items-center gap-1.5">
           {questions.map((q, i) => (
-            <button
+            <div
               key={q.id}
-              onClick={() => setCurrentIndex(i)}
               className={cn(
-                "rounded-full p-0.5 transition-all",
-                i === currentIndex && "ring-2 ring-primary ring-offset-2"
+                "rounded-full p-0.5",
+                i === session.currentIndex &&
+                  "ring-2 ring-primary ring-offset-2",
+                i < session.questionsAnswered && "opacity-50"
               )}
-              title={`Question ${i + 1}`}
             >
               <ScoreDot score={scores[q.id] ?? null} size="md" />
-            </button>
+            </div>
           ))}
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-medium">
-            {currentQuestion.question}
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-medium">
+              {currentQuestion.question}
+            </CardTitle>
+            <span className="text-sm text-muted-foreground">
+              {session.currentIndex + 1} / {questions.length}
+            </span>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <FillInBlank
@@ -180,15 +287,16 @@ export function StudyPage() {
               <>
                 {results && (
                   <div className="flex-1 text-sm font-medium">
-                    Score: {results.correctCount} of {results.totalBlanks} correct
+                    Score: {results.correctCount} of {results.totalBlanks}{" "}
+                    correct
                     <span className="ml-1 text-muted-foreground">
                       ({Math.round(results.score * 100)}%)
                     </span>
                   </div>
                 )}
-                {currentIndex < questions.length - 1 && (
-                  <Button onClick={handleNext}>Next →</Button>
-                )}
+                <Button onClick={handleNext}>
+                  {isLastQuestion ? "Finish" : "Next →"}
+                </Button>
               </>
             )}
           </div>

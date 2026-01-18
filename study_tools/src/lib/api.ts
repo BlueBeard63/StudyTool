@@ -13,6 +13,12 @@ export async function fetchSets(): Promise<QuestionSet[]> {
   return res.json()
 }
 
+export async function fetchSet(setId: string): Promise<QuestionSet> {
+  const res = await fetch(`${API_BASE}/sets/${setId}`)
+  if (!res.ok) throw new Error("Failed to fetch set")
+  return res.json()
+}
+
 export interface CreateSetInput {
   name: string
   questions: { question: string; answer: string }[]
