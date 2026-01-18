@@ -1,5 +1,11 @@
+export type SessionMode = "practice" | "timed"
+
 export interface SessionState {
   status: "not-started" | "in-progress" | "completed"
+  mode: SessionMode
+  timerDuration: number | null
+  timeRemaining: number | null
+  startTime: number | null
   currentIndex: number
   questionsAnswered: number
   correctCount: number
@@ -16,9 +22,16 @@ export interface QuestionResult {
   correctAnswers: string[]
 }
 
-export function createInitialSession(): SessionState {
+export function createInitialSession(
+  mode: SessionMode = "practice",
+  timerDuration: number | null = null
+): SessionState {
   return {
     status: "not-started",
+    mode,
+    timerDuration,
+    timeRemaining: timerDuration,
+    startTime: null,
     currentIndex: 0,
     questionsAnswered: 0,
     correctCount: 0,
