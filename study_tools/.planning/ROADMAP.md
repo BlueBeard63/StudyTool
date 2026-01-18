@@ -12,12 +12,12 @@ A functional fill-in-the-blank study application with progress tracking.
 | 2 | API Layer | REST endpoints for CRUD operations on question sets, questions, and recording study attempts | complete |
 | 3 | Frontend Shell | App layout with navigation, routing between views, and question set list display | complete |
 | 4 | File Upload | Drag-and-drop JSON file upload with validation, filename-based naming, and custom name input | complete |
-| 5 | Fill-in-Blank Engine | Core study mechanic: randomly blank 30-50% of answer words, render input fields, capture user responses | pending |
-| 6 | Fuzzy Matching | Answer validation that accepts minor typos and spelling variations using string similarity | pending |
-| 7 | Knowledge Scoring | Weighted scoring based on recent 5 attempts, visual dot indicators (green/orange/red/grey) | pending |
-| 8 | Study Session Flow | One-at-a-time study mode: show question, check answer, show result, proceed to next | pending |
-| 9 | Timed Mode | Alternative study mode with configurable timer, answer-as-many-as-possible flow | pending |
-| 10 | Smart Ordering | Question selection that prioritizes weak areas (red/orange) over well-known material (green) | pending |
+| 5 | Fill-in-Blank Engine | Core study mechanic: randomly blank 30-50% of answer words, render input fields, capture user responses | complete |
+| 6 | Fuzzy Matching | Answer validation that accepts minor typos and spelling variations using string similarity | complete |
+| 7 | Knowledge Scoring | Weighted scoring based on recent 5 attempts, visual dot indicators (green/orange/red/grey) | complete |
+| 8 | Study Session Flow | One-at-a-time study mode: show question, check answer, show result, proceed to next | complete |
+| 9 | Timed Mode | Alternative study mode with configurable timer, answer-as-many-as-possible flow | complete |
+| 10 | Smart Ordering | Question selection that prioritizes weak areas (red/orange) over well-known material (green) | complete |
 
 ### Phase Details
 

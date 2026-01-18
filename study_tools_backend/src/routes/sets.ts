@@ -66,6 +66,24 @@ router.get("/:id", (req: Request<IdParams>, res: Response) => {
   })
 })
 
+// PUT /api/sets/:id - Rename set
+router.put("/:id", (req: Request<IdParams>, res: Response) => {
+  const { name } = req.body
+  if (!name || typeof name !== "string" || name.trim() === "") {
+    res.status(400).json({ error: "name is required" })
+    return
+  }
+  const updated = QuestionSet.update(req.params.id, name.trim())
+  if (!updated) {
+    res.status(404).json({ error: "Question set not found" })
+    return
+  }
+  res.json({
+    ...updated,
+    questionCount: QuestionSet.getQuestionCount(updated.id),
+  })
+})
+
 // DELETE /api/sets/:id - Delete set (cascades to questions/attempts)
 router.delete("/:id", (req: Request<IdParams>, res: Response) => {
   const deleted = QuestionSet.deleteById(req.params.id)
@@ -76,15 +94,44 @@ router.delete("/:id", (req: Request<IdParams>, res: Response) => {
   res.status(204).send()
 })
 
-// GET /api/sets/:id/questions - Get all questions for a set
+// GET /api/sets/:id/questions - Get questions for a set (paginated)
 router.get("/:id/questions", (req: Request<IdParams>, res: Response) => {
   const set = QuestionSet.getById(req.params.id)
   if (!set) {
     res.status(404).json({ error: "Question set not found" })
     return
   }
-  const questions = Question.getBySetId(req.params.id)
-  res.json(questions)
+
+  const offset = parseInt(req.query.offset as string) || 0
+  const limit = parseInt(req.query.limit as string) || 32
+
+  const questions = Question.getBySetIdPaginated(req.params.id, offset, limit)
+  const total = Question.countBySetId(req.params.id)
+
+  res.json({ questions, total, offset, limit })
+})
+
+// POST /api/sets/:id/questions - Add a question to a set
+router.post("/:id/questions", (req: Request<IdParams>, res: Response) => {
+  const { question, answer } = req.body
+
+  if (!question || typeof question !== "string" || question.trim() === "") {
+    res.status(400).json({ error: "question is required" })
+    return
+  }
+  if (!answer || typeof answer !== "string" || answer.trim() === "") {
+    res.status(400).json({ error: "answer is required" })
+    return
+  }
+
+  const set = QuestionSet.getById(req.params.id)
+  if (!set) {
+    res.status(404).json({ error: "Question set not found" })
+    return
+  }
+
+  const newQuestion = Question.create(req.params.id, question.trim(), answer.trim())
+  res.status(201).json(newQuestion)
 })
 
 export default router

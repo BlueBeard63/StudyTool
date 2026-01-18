@@ -17,6 +17,24 @@ export function getBySetId(setId: string): Question[] {
   return rows.map(rowToQuestion)
 }
 
+export function getBySetIdPaginated(
+  setId: string,
+  offset = 0,
+  limit = 32
+): Question[] {
+  const stmt = db.prepare(
+    "SELECT * FROM questions WHERE set_id = ? LIMIT ? OFFSET ?"
+  )
+  const rows = stmt.all(setId, limit, offset) as QuestionRow[]
+  return rows.map(rowToQuestion)
+}
+
+export function countBySetId(setId: string): number {
+  const stmt = db.prepare("SELECT COUNT(*) as count FROM questions WHERE set_id = ?")
+  const row = stmt.get(setId) as { count: number }
+  return row.count
+}
+
 export function getById(id: string): Question | null {
   const stmt = db.prepare("SELECT * FROM questions WHERE id = ?")
   const row = stmt.get(id) as QuestionRow | undefined

@@ -38,6 +38,13 @@ export function deleteById(id: string): boolean {
   return result.changes > 0
 }
 
+export function update(id: string, name: string): QuestionSet | null {
+  const stmt = db.prepare("UPDATE question_sets SET name = ? WHERE id = ?")
+  const result = stmt.run(name, id)
+  if (result.changes === 0) return null
+  return getById(id)
+}
+
 export function getQuestionCount(id: string): number {
   const stmt = db.prepare("SELECT COUNT(*) as count FROM questions WHERE set_id = ?")
   const row = stmt.get(id) as { count: number }
