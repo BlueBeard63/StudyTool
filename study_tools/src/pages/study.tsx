@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FillInBlank } from "@/components/fill-in-blank"
 import { fetchQuestions, type Question } from "@/lib/api"
 import { countBlanks, getCorrectAnswers, tokenizeAndBlank } from "@/lib/blanking"
+import { checkAnswers, type CheckResult } from "@/lib/checking"
 
 export function StudyPage() {
   const { setId } = useParams<{ setId: string }>()
@@ -15,6 +16,7 @@ export function StudyPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [results, setResults] = useState<CheckResult | null>(null)
 
   // Current question
   const currentQuestion = questions[currentIndex]
@@ -48,6 +50,7 @@ export function StudyPage() {
     const numBlanks = countBlanks(tokens)
     setValues(new Array(numBlanks).fill(""))
     setSubmitted(false)
+    setResults(null)
   }, [tokens])
 
   const handleChange = useCallback((blankIndex: number, value: string) => {
@@ -59,10 +62,9 @@ export function StudyPage() {
   }, [])
 
   const handleSubmit = useCallback(() => {
+    const checkResult = checkAnswers(values, correctAnswers)
+    setResults(checkResult)
     setSubmitted(true)
-    // For now, just log the results
-    console.log("Submitted answers:", values)
-    console.log("Correct answers:", correctAnswers)
   }, [values, correctAnswers])
 
   const handleNext = useCallback(() => {
@@ -124,17 +126,22 @@ export function StudyPage() {
             values={values}
             onChange={handleChange}
             disabled={submitted}
+            results={results?.blanks}
           />
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex items-center gap-2 pt-2">
             {!submitted ? (
               <Button onClick={handleSubmit}>Check Answer</Button>
             ) : (
               <>
-                <div className="flex-1 text-sm">
-                  <span className="text-muted-foreground">Correct answer: </span>
-                  <span className="font-medium">{currentQuestion.answer}</span>
-                </div>
+                {results && (
+                  <div className="flex-1 text-sm font-medium">
+                    Score: {results.correctCount} of {results.totalBlanks} correct
+                    <span className="ml-1 text-muted-foreground">
+                      ({Math.round(results.score * 100)}%)
+                    </span>
+                  </div>
+                )}
                 {currentIndex < questions.length - 1 && (
                   <Button onClick={handleNext}>Next →</Button>
                 )}
