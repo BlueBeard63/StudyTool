@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FillInBlank } from "@/components/fill-in-blank"
-import { fetchQuestions, type Question } from "@/lib/api"
+import { fetchQuestions, recordAttempt, type Question } from "@/lib/api"
 import { countBlanks, getCorrectAnswers, tokenizeAndBlank } from "@/lib/blanking"
 import { checkAnswers, type CheckResult } from "@/lib/checking"
 
@@ -61,11 +61,20 @@ export function StudyPage() {
     })
   }, [])
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     const checkResult = checkAnswers(values, correctAnswers)
     setResults(checkResult)
     setSubmitted(true)
-  }, [values, correctAnswers])
+
+    // Record attempt: correct if ≥50% of blanks are right
+    const isCorrect = checkResult.score >= 0.5
+    try {
+      await recordAttempt(currentQuestion.id, isCorrect)
+    } catch (e) {
+      // Silent failure - don't block UX for tracking
+      console.error("Failed to record attempt:", e)
+    }
+  }, [values, correctAnswers, currentQuestion?.id])
 
   const handleNext = useCallback(() => {
     if (currentIndex < questions.length - 1) {
