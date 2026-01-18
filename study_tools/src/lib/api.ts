@@ -47,6 +47,27 @@ export interface Question {
 export async function fetchQuestions(setId: string): Promise<Question[]> {
   const res = await fetch(`${API_BASE}/sets/${setId}/questions`)
   if (!res.ok) throw new Error("Failed to fetch questions")
+  const data = await res.json()
+  // Handle both old (array) and new (paginated) response formats
+  return Array.isArray(data) ? data : data.questions
+}
+
+export interface PaginatedQuestions {
+  questions: Question[]
+  total: number
+  offset: number
+  limit: number
+}
+
+export async function fetchQuestionsPaginated(
+  setId: string,
+  offset = 0,
+  limit = 32
+): Promise<PaginatedQuestions> {
+  const res = await fetch(
+    `${API_BASE}/sets/${setId}/questions?offset=${offset}&limit=${limit}`
+  )
+  if (!res.ok) throw new Error("Failed to fetch questions")
   return res.json()
 }
 
@@ -81,4 +102,59 @@ export async function fetchQuestionStats(
   const res = await fetch(`${API_BASE}/questions/${questionId}/stats`)
   if (!res.ok) throw new Error("Failed to fetch stats")
   return res.json()
+}
+
+// Set management
+export async function updateSet(
+  setId: string,
+  name: string
+): Promise<QuestionSet> {
+  const res = await fetch(`${API_BASE}/sets/${setId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  })
+  if (!res.ok) throw new Error("Failed to update set")
+  return res.json()
+}
+
+export async function deleteSet(setId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/sets/${setId}`, { method: "DELETE" })
+  if (!res.ok) throw new Error("Failed to delete set")
+}
+
+// Question management
+export async function addQuestion(
+  setId: string,
+  question: string,
+  answer: string
+): Promise<Question> {
+  const res = await fetch(`${API_BASE}/sets/${setId}/questions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, answer }),
+  })
+  if (!res.ok) throw new Error("Failed to add question")
+  return res.json()
+}
+
+export async function updateQuestion(
+  questionId: string,
+  question: string,
+  answer: string
+): Promise<Question> {
+  const res = await fetch(`${API_BASE}/questions/${questionId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, answer }),
+  })
+  if (!res.ok) throw new Error("Failed to update question")
+  return res.json()
+}
+
+export async function deleteQuestion(questionId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/questions/${questionId}`, {
+    method: "DELETE",
+  })
+  if (!res.ok) throw new Error("Failed to delete question")
 }
