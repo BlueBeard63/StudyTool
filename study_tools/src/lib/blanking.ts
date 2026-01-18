@@ -14,7 +14,7 @@ export function tokenizeAndBlank(
 ): Token[] {
   // Split into tokens, preserving whitespace and punctuation
   // This regex captures: sequences of word chars, whitespace, or punctuation
-  const parts = answer.split(/(\s+|[.,!?;:'"()\[\]{}]+)/).filter(Boolean)
+  const parts = answer.split(/(\s+|[.,!?;:'"()[\]{}]+)/).filter(Boolean)
 
   // Identify which tokens are "blankable" (contain at least one letter)
   const blankableIndices: number[] = []

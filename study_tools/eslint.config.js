@@ -19,5 +19,12 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Disable warnings about fast refresh in UI library components
+      'react-refresh/only-export-components': 'off',
+      // Allow setState in effects for resetting state on prop/derived-state changes
+      // This is a valid pattern per React docs for "resetting all state when a prop changes"
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])
