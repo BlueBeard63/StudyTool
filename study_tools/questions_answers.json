@@ -1,0 +1,858 @@
+[
+  {
+    "question": "What is ethical hacking?",
+    "answer": "Authorised and legal testing of systems to find, enumerate, locate, and exploit vulnerabilities in order to improve security and provide countermeasures."
+  },
+  {
+    "question": "What is the difference between vulnerability analysis and penetration testing?",
+    "answer": "Vulnerability analysis identifies potential weaknesses, is often automated, requires no proof-of-concept, and happens inside the security perimeter. Penetration testing actively exploits weaknesses, requires proof-of-concept, simulates attacker behaviour, and is carried out from outside the security perimeter."
+  },
+  {
+    "question": "What distinguishes a white hat from a black hat hacker?",
+    "answer": "White hats act legally, follow contracts, report findings, manage resources, and work ethically. Black hats act illegally, avoid detection, have unlimited time, operate in the underground economy and perform unauthorised attacks."
+  },
+  {
+    "question": "List the main phases of a penetration test.",
+    "answer": "Reconnaissance, Scanning, Exploitation, Post-exploitation, and Reporting."
+  },
+  {
+    "question": "What happens during reconnaissance?",
+    "answer": "Information is gathered about the target, including OS details, IP addresses, services, DNS profiles, email formats and geographical or organisational insight."
+  },
+  {
+    "question": "What is the purpose of scanning?",
+    "answer": "To identify live systems, open ports, services, protocols, vulnerabilities and OS information using tools such as Nmap."
+  },
+  {
+    "question": "What occurs during exploitation?",
+    "answer": "The tester uses crafted or known exploits to gain access, including reverse shells, service exploitation or web/database attacks."
+  },
+  {
+    "question": "What is post-exploitation?",
+    "answer": "Activities after gaining access, such as privilege escalation, lateral movement, password cracking and pivoting."
+  },
+  {
+    "question": "Define confidentiality, integrity and availability.",
+    "answer": "Confidentiality: ensuring information is not accessed by unauthorised entities. Integrity: maintaining accuracy and completeness of information. Availability: ensuring resources are accessible and usable when required."
+  },
+  {
+    "question": "What is a vulnerability, threat and risk?",
+    "answer": "A vulnerability is a system weakness. A threat is an event with potential to cause harm. A risk is the chance a threat will exploit a vulnerability and cause impact."
+  },
+  {
+    "question": "What is OSINT?",
+    "answer": "Open Source Intelligence – the collection of publicly available information (e.g. social media, DNS, search engines, metadata, Shodan) to profile a target."
+  },
+  {
+    "question": "Give examples of passive information-gathering methods.",
+    "answer": "Search engines, social media, DNS lookups, OSINT tools (e.g. Shodan, theHarvester, Maltego), public records, archive.org."
+  },
+  {
+    "question": "Give examples of active information-gathering techniques.",
+    "answer": "DNS zone transfers, traceroute, email tracking, network footprinting, scanning and enumeration."
+  },
+  {
+    "question": "What is the purpose of a DNS zone transfer?",
+    "answer": "To synchronise DNS records between servers. If publicly accessible, it leaks detailed DNS information useful for targeting."
+  },
+  {
+    "question": "What is Nmap used for?",
+    "answer": "Host discovery, port scanning, service identification, OS fingerprinting and script-based enumeration."
+  },
+  {
+    "question": "What is the difference between a TCP connect scan and SYN scan?",
+    "answer": "TCP connect (-sT) completes the three-way handshake, making it more detectable. SYN scan (-sS) sends only SYN packets and is considered ‘stealthier’."
+  },
+  {
+    "question": "What is packet crafting?",
+    "answer": "Building custom packets (e.g. using hping3) to bypass filters, firewalls or ICMP restrictions."
+  },
+  {
+    "question": "What is enumeration?",
+    "answer": "Making active queries or connections to extract detailed information such as users, groups, shares, running services and routing tables."
+  },
+  {
+    "question": "What is NetBIOS enumeration used for?",
+    "answer": "To extract information about Windows systems, including computer names, domain membership and shared resources."
+  },
+  {
+    "question": "What is SNMP enumeration?",
+    "answer": "Querying SNMP to obtain device information such as ARP tables, routing tables, interfaces and host details."
+  },
+  {
+    "question": "What is LDAP enumeration?",
+    "answer": "Extracting directory information (users, groups, organisational units) through the Lightweight Directory Access Protocol."
+  },
+  {
+    "question": "Name common SMTP enumeration commands.",
+    "answer": "VRFY (verify users), EXPN (expand aliases), and RCPT TO (identify valid recipients)."
+  },
+  {
+    "question": "What is SQL injection?",
+    "answer": "Injecting SQL statements into application inputs to manipulate database queries, bypass authentication or extract/modify data."
+  },
+  {
+    "question": "What is the goal of Boolean-based blind SQL injection?",
+    "answer": "To infer database information by observing changes in the application's responses to true/false conditions."
+  },
+  {
+    "question": "What is time-based SQL injection?",
+    "answer": "An inferential attack where the database is instructed to delay responses, allowing inference of results based on timing."
+  },
+  {
+    "question": "What is HTML injection?",
+    "answer": "Injecting HTML elements into an application, often used in the context of reflected or stored XSS."
+  },
+  {
+    "question": "What is command injection?",
+    "answer": "Injecting operating system commands through unsanitised input fields, enabling remote command execution."
+  },
+  {
+    "question": "What is code injection?",
+    "answer": "Injecting programming-language specific code (e.g. PHP) into an application that processes and executes it."
+  },
+  {
+    "question": "What is session hijacking?",
+    "answer": "Stealing or manipulating session tokens/cookies to impersonate authenticated users."
+  },
+  {
+    "question": "What is CSRF?",
+    "answer": "Cross-Site Request Forgery – tricking an authenticated user into sending malicious requests to a site that trusts the user."
+  },
+  {
+    "question": "How does parameter pollution work?",
+    "answer": "Duplicating parameters in a request (e.g. pass=1234&pass='or 1=1) to bypass input validation and inject malicious content."
+  },
+  {
+    "question": "What is insecure direct object reference (IDOR)?",
+    "answer": "Accessing data by manipulating object identifiers (e.g. ?cid=109 changed to ?cid=111) without authorisation checks."
+  },
+  {
+    "question": "What is clickjacking?",
+    "answer": "Tricking a user into clicking hidden elements, often by overlaying iframes, to perform unintended actions."
+  },
+  {
+    "question": "What is directory traversal?",
+    "answer": "Manipulating file paths (e.g. ../../../etc/passwd) to access files outside the intended directory."
+  },
+  {
+    "question": "What are common insecure coding practices?",
+    "answer": "Hard-coded credentials, verbose errors, lack of sanitisation, weak authentication, unprotected APIs, race conditions and comments leaking sensitive information."
+  },
+  {
+    "question": "What are ethical hazards in penetration testing?",
+    "answer": "Legal ambiguity, human targets, client indifference, and conflicts between red and blue team objectives."
+  },
+  {
+    "question": "What are examples of ethical safeguards?",
+    "answer": "Clear risk articulation, ensuring clients understand services, maintaining responsibility to professional practice and legal frameworks."
+  },
+  {
+    "question": "What is SQL injection?",
+    "answer": "An attack where unsanitised input is used to manipulate SQL queries, enabling authentication bypass, data extraction, modification, or deletion."
+  },
+  {
+    "question": "What does the SQL query 'SELECT * FROM users WHERE username='$username' AND password='$password'' represent?",
+    "answer": "A login validation query vulnerable to SQLi if input is not sanitised."
+  },
+  {
+    "question": "What does the SQL payload \"' OR 1=1 --\" achieve?",
+    "answer": "It forces the SQL condition to be true, bypassing authentication."
+  },
+  {
+    "question": "What is error-based SQL injection?",
+    "answer": "A technique that uses database error messages to reveal schema information."
+  },
+  {
+    "question": "What is union-based SQL injection?",
+    "answer": "An attack that adds a UNION SELECT clause to retrieve data from other tables."
+  },
+  {
+    "question": "What is boolean-based blind SQL injection?",
+    "answer": "A technique that infers data based on whether a query returns TRUE or FALSE."
+  },
+  {
+    "question": "What is time-based blind SQL injection?",
+    "answer": "A technique where the attacker infers data by causing the DB to delay responses."
+  },
+  {
+    "question": "What is out-of-band SQL injection?",
+    "answer": "A technique using alternative channels (e.g., DNS, HTTP requests) to extract data when direct output is unavailable."
+  },
+  {
+    "question": "What is voice-based SQL injection?",
+    "answer": "An SQL injection technique delivered through voice-controlled database interfaces."
+  },
+  {
+    "question": "What is SQLMap used for?",
+    "answer": "An automated SQL injection and DB takeover tool supporting enumeration, dumping, and exploitation."
+  },
+  {
+    "question": "What is jSQL?",
+    "answer": "A Java-based automatic SQL injection tool."
+  },
+  {
+    "question": "What is BBQSQL?",
+    "answer": "A blind SQL injection toolkit used for efficient boolean/time-based attacks."
+  },
+  {
+    "question": "What is NoSQLMap?",
+    "answer": "A tool for exploiting NoSQL database injection vulnerabilities."
+  },
+  {
+    "question": "What is DSSS (Damn Small SQLi Scanner)?",
+    "answer": "A lightweight SQL injection scanning tool."
+  },
+  {
+    "question": "What is HTML injection?",
+    "answer": "Injecting HTML into inputs to alter page structure or deliver malicious scripts."
+  },
+  {
+    "question": "What is command injection?",
+    "answer": "An attack where OS commands are executed through unsanitised application input."
+  },
+  {
+    "question": "What is code injection?",
+    "answer": "An attack where programming language code (e.g., PHP) is inserted and executed."
+  },
+  {
+    "question": "What is the purpose of 'phpinfo()' in exploitation?",
+    "answer": "Displays PHP environment details that assist in further exploitation."
+  },
+  {
+    "question": "What is credential brute-forcing?",
+    "answer": "A method of guessing login credentials using dictionaries or brute force."
+  },
+  {
+    "question": "What is John the Ripper used for?",
+    "answer": "Password cracking via dictionary, brute-force, and hybrid modes."
+  },
+  {
+    "question": "What is Hashcat used for?",
+    "answer": "GPU-accelerated password cracking supporting many hashing algorithms."
+  },
+  {
+    "question": "What is session hijacking?",
+    "answer": "Taking control of a user’s session by stealing or manipulating session cookies."
+  },
+  {
+    "question": "What does the payload '<script>alert(document.cookie)</script>' demonstrate?",
+    "answer": "Capturing cookies via XSS to assist session hijacking."
+  },
+  {
+    "question": "What is URL-based redirection?",
+    "answer": "A technique where attackers manipulate redirect parameters to send users to malicious sites."
+  },
+  {
+    "question": "What are default credential attacks?",
+    "answer": "Exploiting systems left with manufacturer default usernames and passwords."
+  },
+  {
+    "question": "What is a dictionary attack?",
+    "answer": "A password attack using predefined wordlists to guess credentials."
+  },
+  {
+    "question": "What is Hydra?",
+    "answer": "A fast login-cracking tool supporting numerous network services and protocols."
+  },
+  {
+    "question": "What are Kerberos attacks?",
+    "answer": "Attacks targeting Windows Kerberos authentication, often involving ticket forgery, extraction or replay."
+  },
+  {
+    "question": "What is authorisation in web security?",
+    "answer": "Determining which actions an authenticated user is allowed to perform."
+  },
+  {
+    "question": "What is parameter pollution?",
+    "answer": "Sending duplicate parameters to bypass validation or inject malicious input."
+  },
+  {
+    "question": "What is Insecure Direct Object Reference (IDOR)?",
+    "answer": "Accessing unauthorised data by modifying object identifiers (e.g., changing ?cid=109 to ?cid=111)."
+  },
+  {
+    "question": "What is XSS (Cross-Site Scripting)?",
+    "answer": "Injecting client-side scripts into web applications so they are executed in users’ browsers."
+  },
+  {
+    "question": "What is stored XSS?",
+    "answer": "A persistent attack where malicious scripts are stored in the database and displayed to users."
+  },
+  {
+    "question": "What is reflected XSS?",
+    "answer": "An XSS variant where malicious input is immediately reflected from the server in the response."
+  },
+  {
+    "question": "What is XSStrike?",
+    "answer": "An advanced XSS detection and exploitation tool."
+  },
+  {
+    "question": "What is XSSer?",
+    "answer": "A tool that automates detection and exploitation of XSS vulnerabilities."
+  },
+  {
+    "question": "What is CSRF (Cross-Site Request Forgery)?",
+    "answer": "A vulnerability where attackers trick users into performing unwanted actions on authenticated sites."
+  },
+  {
+    "question": "What is a CSRF synchronisation token?",
+    "answer": "A secret value embedded in legitimate website requests to prevent CSRF attacks."
+  },
+  {
+    "question": "What is clickjacking?",
+    "answer": "Tricking a user into clicking hidden elements by overlaying content with transparent frames."
+  },
+  {
+    "question": "What is security misconfiguration?",
+    "answer": "Leaving systems with insecure defaults, weak settings or unnecessary services that expose vulnerabilities."
+  },
+  {
+    "question": "What is directory traversal?",
+    "answer": "A technique that accesses restricted files by navigating the filesystem (e.g., ../../../etc/passwd)."
+  },
+  {
+    "question": "What is cookie manipulation?",
+    "answer": "Intercepting or altering cookies to escalate privileges or bypass authentication."
+  },
+  {
+    "question": "What tools are used for cookie manipulation?",
+    "answer": "Burp Suite, Fiddler and mitmproxy."
+  },
+  {
+    "question": "What is file inclusion?",
+    "answer": "A vulnerability where attackers force the application to load and run local or remote files (LFI/RFI)."
+  },
+  {
+    "question": "What are common insecure coding practices?",
+    "answer": "Hard-coded credentials, verbose errors, poor validation, hidden functions, race conditions and unprotected APIs."
+  },
+  {
+    "question": "What is network enumeration?",
+    "answer": "The active process of discovering users, groups, shares, services, routing tables and hosts within a network to support further exploitation."
+  },
+  {
+    "question": "What information can enumeration reveal?",
+    "answer": "User accounts, groups, services, OS details, network shares, open ports, routing tables, DNS information and application banners."
+  },
+  {
+    "question": "What is ARP-based passive scanning?",
+    "answer": "Monitoring ARP requests to identify hosts and MAC addresses without sending traffic."
+  },
+  {
+    "question": "What is a passive OS fingerprinting technique?",
+    "answer": "Identifying OS types by observing characteristics of captured packets such as TTL, window size and flags."
+  },
+  {
+    "question": "What is an active OS fingerprinting technique?",
+    "answer": "Sending customised probes (e.g., via Nmap) to analyse how a system responds and infer its OS."
+  },
+  {
+    "question": "What are TCP/IP fingerprinting fields commonly analysed?",
+    "answer": "Initial TTL, window size, max segment size, window scale, DF flag, sackOK, NOP padding."
+  },
+  {
+    "question": "What is banner grabbing?",
+    "answer": "Connecting to remote services to retrieve version and configuration information displayed before login."
+  },
+  {
+    "question": "What tools can perform banner grabbing?",
+    "answer": "Telnet, netcat, cURL, wget and Nmap scripts."
+  },
+  {
+    "question": "What is FTP enumeration used for?",
+    "answer": "Extracting anonymous logins, directory structures and known vulnerabilities in FTP services."
+  },
+  {
+    "question": "What is TFTP enumeration?",
+    "answer": "Interacting with Trivial FTP services to retrieve exposed files, often without authentication."
+  },
+  {
+    "question": "What is the 'finger' service used for?",
+    "answer": "Querying user information such as logged-in users and user details."
+  },
+  {
+    "question": "What is MSRPC enumeration?",
+    "answer": "Enumerating Windows RPC services for shares, users and system information."
+  },
+  {
+    "question": "What is NetBIOS used for in enumeration?",
+    "answer": "Mapping Windows network resources, identifying domain names, listing shares and discovering computers."
+  },
+  {
+    "question": "What is SMB enumeration used for?",
+    "answer": "Extracting shared folders, user lists and service information via ports 139/445."
+  },
+  {
+    "question": "What is the purpose of Nmap’s smb-enum-users script?",
+    "answer": "Enumerating Windows SMB users remotely."
+  },
+  {
+    "question": "What is the purpose of Nmap’s smb-enum-groups script?",
+    "answer": "Listing Windows SMB groups."
+  },
+  {
+    "question": "What is the purpose of Nmap’s smb-enum-services script?",
+    "answer": "Identifying services running on Windows machines via SMB."
+  },
+  {
+    "question": "What is SNMPwalk?",
+    "answer": "A tool to browse MIB tree structures and extract SNMP device information."
+  },
+  {
+    "question": "What is SNMPcheck?",
+    "answer": "A tool for enumerating SNMP details such as users, processes and network configuration."
+  },
+  {
+    "question": "What default SNMP community strings are often targeted?",
+    "answer": "public (read-only) and private (read/write)."
+  },
+  {
+    "question": "What is the purpose of 'showmount'?",
+    "answer": "Enumerating available NFS shares on a target system."
+  },
+  {
+    "question": "What is NTPClock or ntpq used for?",
+    "answer": "Querying NTP servers to reveal system time, peers and configuration."
+  },
+  {
+    "question": "What is Rusers used for?",
+    "answer": "Retrieving information about logged-in users across a network."
+  },
+  {
+    "question": "What is rwho used for?",
+    "answer": "Displaying logged-in users across Unix/Linux systems."
+  },
+  {
+    "question": "What is the purpose of crontab enumeration?",
+    "answer": "Identifying scheduled tasks that might be exploitable or reveal system workflows."
+  },
+  {
+    "question": "Why is OS version enumeration important?",
+    "answer": "It helps identify patches, vulnerabilities and exploit paths specific to the OS."
+  },
+  {
+    "question": "What is network share enumeration?",
+    "answer": "Identifying shared folders on a network that may contain sensitive data or weak permissions."
+  },
+  {
+    "question": "What is a reverse shell?",
+    "answer": "A shell where the victim connects answer to the attacker's machine, bypassing inbound firewall restrictions."
+  },
+  {
+    "question": "Why are reverse shells effective against firewalls?",
+    "answer": "Firewalls often block incoming connections but allow outbound ones, enabling the victim to reach the attacker."
+  },
+  {
+    "question": "What is the attacker's machine in a reverse shell setup?",
+    "answer": "A listening server waiting for incoming connections from the victim system."
+  },
+  {
+    "question": "What is lateral movement?",
+    "answer": "Expanding access across systems within a compromised network, often after privilege escalation."
+  },
+  {
+    "question": "What is privilege escalation?",
+    "answer": "Gaining higher-level access by exploiting misconfigurations, vulnerabilities or weak permissions."
+  },
+  {
+    "question": "What is pivoting?",
+    "answer": "Using a compromised host as a bridge to access otherwise unreachable systems."
+  },
+  {
+    "question": "What is port forwarding in post-exploitation?",
+    "answer": "Redirecting traffic between networks to expose internal services externally."
+  },
+  {
+    "question": "What is firewall evasion?",
+    "answer": "Techniques that bypass firewall filtering using fragmented packets, spoofing, proxies and routing tricks."
+  },
+  {
+    "question": "What is packet fragmentation?",
+    "answer": "Splitting payloads into small fragments to evade detection or bypass firewalls expecting whole packets."
+  },
+  {
+    "question": "What is source routing?",
+    "answer": "Forcing packets to travel through a specific path to bypass security controls."
+  },
+  {
+    "question": "What is source port manipulation?",
+    "answer": "Choosing trusted or low-numbered source ports (e.g., port 53) to bypass firewall rules."
+  },
+  {
+    "question": "What is IP spoofing?",
+    "answer": "Modifying the source IP address to hide the attacker's identity or bypass IP-based filters."
+  },
+  {
+    "question": "What is MAC spoofing?",
+    "answer": "Changing a device's MAC address to bypass network restrictions or impersonate another device."
+  },
+  {
+    "question": "What are decoy scans?",
+    "answer": "Nmap feature sending packets from multiple fake IPs to obscure the attacker's real identity."
+  },
+  {
+    "question": "What is a proxy server used for in penetration testing?",
+    "answer": "Routing traffic through another server to hide the attacker's IP or bypass geolocation restrictions."
+  },
+  {
+    "question": "What are anonymisers?",
+    "answer": "Services such as Tor that hide the attacker's identity by routing traffic through multiple relays."
+  },
+  {
+    "question": "What are bad checksums used for in exploit attempts?",
+    "answer": "Creating packets with invalid checksums to confuse or bypass intrusion detection systems."
+  },
+  {
+    "question": "What is a customised scan with Nmap '--scanflags'?",
+    "answer": "Crafting TCP flags to create unusual packet combinations for firewall evasion."
+  },
+  {
+    "question": "What is the fundamental dilemma of security?",
+    "answer": "Users often have security requirements but lack the expertise to implement or understand them, making clear communication essential."
+  },
+  {
+    "question": "Why is security considered a supporting process?",
+    "answer": "It underpins business and system operations rather than being an end in itself."
+  },
+  {
+    "question": "Where do security requirements typically originate?",
+    "answer": "From valuable or sensitive assets such as personal data, financial resources, government secrets or intellectual property."
+  },
+  {
+    "question": "What is information security according to ISO/IEC 27002?",
+    "answer": "The preservation of confidentiality, integrity and availability, alongside authenticity, accountability, non-repudiation and reliability."
+  },
+  {
+    "question": "Define confidentiality in information security.",
+    "answer": "Ensuring information is not disclosed to unauthorised individuals, entities or processes."
+  },
+  {
+    "question": "What are related properties to confidentiality?",
+    "answer": "Unlinkability and anonymity."
+  },
+  {
+    "question": "Define integrity in information security.",
+    "answer": "Safeguarding the accuracy and completeness of information and systems."
+  },
+  {
+    "question": "Why is integrity often a prerequisite for other security properties?",
+    "answer": "Compromised integrity can undermine confidentiality or availability."
+  },
+  {
+    "question": "Define availability.",
+    "answer": "Ensuring authorised users have access to information and resources when required."
+  },
+  {
+    "question": "What is authenticity?",
+    "answer": "Verifying that an identity or resource is genuinely what it claims to be."
+  },
+  {
+    "question": "What is accountability?",
+    "answer": "The ability to trace actions answer to responsible individuals or entities."
+  },
+  {
+    "question": "What is non-repudiation?",
+    "answer": "Assurance that someone cannot deny their actions or communications."
+  },
+  {
+    "question": "What is reliability?",
+    "answer": "Consistent and correct operation of systems in expected conditions."
+  },
+  {
+    "question": "What is a system in the context of security?",
+    "answer": "A combination of software, hardware, firmware, users, support processes and supply chains, forming a socio-technical whole."
+  },
+  {
+    "question": "Why is boundary definition important in system security?",
+    "answer": "It determines the scope of analysis and identifies which assets must be protected."
+  },
+  {
+    "question": "What is an asset in security?",
+    "answer": "Anything of value—tangible or intangible—that requires protection."
+  },
+  {
+    "question": "Define vulnerability.",
+    "answer": "An exploitable weakness in a system."
+  },
+  {
+    "question": "Define threat.",
+    "answer": "An event or actor with the potential to cause harm."
+  },
+  {
+    "question": "Define risk.",
+    "answer": "The likelihood that a threat will exploit a vulnerability, causing impact."
+  },
+  {
+    "question": "Give examples distinguishing threats from vulnerabilities.",
+    "answer": "Threat: fraud, virus infection. Vulnerability: weak password, misconfigured firewall."
+  },
+  {
+    "question": "What are the key elements of security according to Anderson?",
+    "answer": "Policy, Mechanism, Assurance and Incentives."
+  },
+  {
+    "question": "What is the purpose of a security policy?",
+    "answer": "To specify required security behaviours and actions."
+  },
+  {
+    "question": "What are security mechanisms?",
+    "answer": "Technical controls that implement security policies."
+  },
+  {
+    "question": "What is assurance in security?",
+    "answer": "Evidence that security mechanisms function correctly and as intended."
+  },
+  {
+    "question": "What are incentives in security?",
+    "answer": "Factors motivating both defenders and attackers, influencing security outcomes."
+  },
+  {
+    "question": "What is an ethical dilemma?",
+    "answer": "A situation where moral choices conflict, often involving privacy, safety or accountability."
+  },
+  {
+    "question": "List common fallacies related to computer hacking.",
+    "answer": "‘All information should be free’, ‘Break-ins help reveal flaws’, ‘Unused resources are fair game’, ‘Hackers only learn and don't change anything’, ‘Hackers protect against big brother’."
+  },
+  {
+    "question": "What is the Computer Misuse Act 1990?",
+    "answer": "UK legislation criminalising unauthorised access, unauthorised access with intent to commit further offences, and unauthorised modification of computer material."
+  },
+  {
+    "question": "What is the Human Rights Act 1998 relevant for?",
+    "answer": "Protecting privacy, communication rights and proportionality in surveillance."
+  },
+  {
+    "question": "What is the Regulation of Investigatory Powers Act (RIPA) 2000?",
+    "answer": "A law governing lawful interception, surveillance and investigation."
+  },
+  {
+    "question": "What is the Data Protection Act?",
+    "answer": "UK legislation enforcing lawful processing, storage and use of personal data."
+  },
+  {
+    "question": "What are professional ethics?",
+    "answer": "Principles guiding responsible behaviour in professions that affect many people or involve complex, high-stakes decisions."
+  },
+  {
+    "question": "What new ethical challenges arise from computing?",
+    "answer": "Privacy issues, automated decision-making, safety-critical systems and digital accountability."
+  },
+  {
+    "question": "What is the purpose of professional codes of conduct?",
+    "answer": "To guide behaviour, support newcomers, encapsulate professional wisdom and maintain public trust."
+  },
+  {
+    "question": "What are the four duty groups in the British Computer Society’s Code of Conduct?",
+    "answer": "Duty to the public interest, relevant authority, the profession, and personal competence/integrity."
+  },
+  {
+    "question": "What are the three steps to approaching an ethical issue?",
+    "answer": "Identify the issue, analyse the context and concepts, then deliberate using ethical reasoning."
+  },
+  {
+    "question": "What ethical theories help evaluate moral issues?",
+    "answer": "Authoritarianism, Consequentialism, Deontologism and Relativism."
+  },
+  {
+    "question": "Why is ethics essential in penetration testing?",
+    "answer": "It guides testers through legal boundaries, responsibilities to clients and handling sensitive data."
+  },
+  {
+    "question": "What ethical hazards are associated with penetration testing?",
+    "answer": "Legal ambiguity, human targets, client indifference and tensions between red and blue teams."
+  },
+  {
+    "question": "What are ethical safeguards in penetration testing?",
+    "answer": "Clear risk articulation, ensuring client understanding and maintaining professional responsibility."
+  },
+  {
+    "question": "What is the importance of a security lexicon?",
+    "answer": "It ensures clear and unambiguous communication between stakeholders."
+  },
+  {
+    "question": "Why is security never absolute?",
+    "answer": "Requirements, threats and technologies evolve, making perfect security unattainable."
+  },
+  {
+    "question": "Why is understanding context essential in security?",
+    "answer": "Security decisions depend heavily on operational environment and system use."
+  },
+  {
+    "question": "What is a Capture the Flag (CTF) competition?",
+    "answer": "A cybersecurity challenge where participants solve technical puzzles, exploit vulnerabilities or analyse digital artefacts to capture 'flags' and earn points."
+  },
+  {
+    "question": "What is the purpose of a CTF?",
+    "answer": "To develop practical security skills through hands-on challenges in areas such as cryptography, forensics, reverse engineering and exploitation."
+  },
+  {
+    "question": "What is meant by a security mindset?",
+    "answer": "Thinking critically about how systems might fail or be abused and recognising the true boundaries and limitations of security assumptions."
+  },
+  {
+    "question": "Give an example illustrating the security mindset.",
+    "answer": "Considering how a burglar might climb a drainpipe to access a window rather than focusing only on the question door lock."
+  },
+  {
+    "question": "What is cybernetics?",
+    "answer": "The study of control, behaviour and communication in animals and machines, influencing early ideas about computer security."
+  },
+  {
+    "question": "What was the significance of the 'The Computer Security Problem' paper?",
+    "answer": "It framed security as a well-defined field requiring systematic thinking, influencing modern computer security theory."
+  },
+  {
+    "question": "What is the role of abstraction in security?",
+    "answer": "It defines perspectives such as specification, implementation and validation, each of which must be secured."
+  },
+  {
+    "question": "What are the three abstraction levels relevant to security?",
+    "answer": "Specification (policy), Implementation (mechanisms) and Validation (assurance)."
+  },
+  {
+    "question": "Why is understanding layers important in computer security?",
+    "answer": "Security mechanisms may work well at one layer but be undermined by weaknesses at another."
+  },
+  {
+    "question": "What is the difference between prevention, detection and recovery in security?",
+    "answer": "Prevention stops attacks, detection identifies attacks after they occur, recovery restores normal operation after compromise."
+  },
+  {
+    "question": "What is the purpose of a justification structure in security?",
+    "answer": "To organise reasoning about security design decisions and evidence supporting assurance claims."
+  },
+  {
+    "question": "What are common defensive strategies in system security?",
+    "answer": "Fail-safe defaults, least privilege, audit capability, psychological acceptability and defence in depth."
+  },
+  {
+    "question": "What is the principle of least privilege?",
+    "answer": "Granting only the minimum access rights necessary for users or processes to perform their tasks."
+  },
+  {
+    "question": "What is defence in depth?",
+    "answer": "Using multiple security layers so that the failure of one does not compromise the entire system."
+  },
+  {
+    "question": "What is a fail-safe default?",
+    "answer": "A design approach where access is denied unless explicitly permitted."
+  },
+  {
+    "question": "What is psychological acceptability?",
+    "answer": "Security mechanisms must be usable and intuitive so users do not bypass them."
+  },
+  {
+    "question": "What is complete mediation?",
+    "answer": "Every access request should be checked for authorisation instead of relying on cached or assumed permissions."
+  },
+  {
+    "question": "What is the importance of auditing in security?",
+    "answer": "Audit logs support accountability, detection and investigation of misuse or breaches."
+  },
+  {
+    "question": "What is a trusted computing base (TCB)?",
+    "answer": "The set of all components essential to system security whose failure could lead to compromise."
+  },
+  {
+    "question": "What is a reference monitor?",
+    "answer": "An abstract access control concept that mediates every access, is tamper-proof and small enough to verify."
+  },
+  {
+    "question": "What is the relationship between policy, model and mechanism?",
+    "answer": "Policy defines what must be enforced, a model expresses it formally, and mechanisms implement it."
+  },
+  {
+    "question": "What is a security kernel?",
+    "answer": "The part of the operating system responsible for enforcing security policies, typically implementing the reference monitor."
+  },
+  {
+    "question": "What is the principle of economy of mechanism?",
+    "answer": "Security mechanisms should be as simple as possible to reduce errors and improve verifiability."
+  },
+  {
+    "question": "What is separation of privilege?",
+    "answer": "Access should require multiple conditions or controls, not a single point of failure."
+  },
+  {
+    "question": "What is an attack surface?",
+    "answer": "The sum of all points where an attacker can attempt to enter, observe or manipulate a system."
+  },
+  {
+    "question": "What is the significance of incentives in security?",
+    "answer": "Security decisions depend on aligning incentives among users, developers, administrators and attackers."
+  },
+  {
+    "question": "What is an operational requirement in security?",
+    "answer": "A non-negotiable business requirement that security must support, such as high availability or specific performance constraints."
+  },
+  {
+    "question": "What is meant by system scope in security analysis?",
+    "answer": "Determining which components, processes and environments fall within the boundaries of the security assessment."
+  },
+  {
+    "question": "What is AI-enabled reconnaissance?",
+    "answer": "Using machine-learning techniques to identify patterns, discover assets or automate information-gathering during an attack."
+  },
+  {
+    "question": "What risks arise from AI-powered cyber attacks?",
+    "answer": "Highly targeted phishing, automated exploitation, rapid vulnerability scanning and adaptive malware."
+  },
+  {
+    "question": "What is the impact of generative AI on social engineering?",
+    "answer": "It enables highly realistic messages, impersonation, voice cloning and tailored persuasion techniques."
+  },
+  {
+    "question": "What are the main learning objectives in a penetration testing module?",
+    "answer": "Recognising hazards, understanding the cybersecurity context, mastering principles, understanding ethics, and building a security lexicon."
+  },
+  {
+    "question": "What are the core topics typically covered in an ethical hacking module?",
+    "answer": "Password cracking, packet sniffing, DoS attacks, OS vulnerabilities, malware, web app security, SQL injection, XSS, CSRF and more."
+  },
+  {
+    "question": "What is the purpose of examining course aims in security education?",
+    "answer": "To understand expected competencies in penetrating testing, ethical decision-making and professional responsibility."
+  },
+  {
+    "question": "What is meant by 'security is contextual'?",
+    "answer": "Security solutions depend heavily on the environment, use case and operational constraints."
+  },
+  {
+    "question": "What does 'security is difficult to get right' mean?",
+    "answer": "It requires balancing complex, evolving and often conflicting requirements while anticipating unknown threats."
+  },
+  {
+    "question": "What does 'perfect security is unattainable' imply?",
+    "answer": "There will always be trade-offs, limitations and new vulnerabilities emerging over time."
+  },
+  {
+    "question": "What is a socio-technical model in security?",
+    "answer": "A model recognising that systems combine technology, people, processes and environments."
+  },
+  {
+    "question": "What is the importance of a security lexicon?",
+    "answer": "It ensures all stakeholders share a common vocabulary, reducing ambiguity and misunderstanding."
+  },
+  {
+    "question": "Why is communicating security risks challenging?",
+    "answer": "Stakeholders often have different answergrounds, interests and levels of technical expertise."
+  },
+  {
+    "question": "What role does judgement play in ethical hacking?",
+    "answer": "Testers must make responsible decisions in ambiguous situations where rules or expectations are unclear."
+  },
+  {
+    "question": "What is ethical stress in penetration testing?",
+    "answer": "Pressure arising from unclear legal boundaries or conflicting expectations when conducting assessments."
+  },
+  {
+    "question": "What is meant by 'professional responsibility' in security roles?",
+    "answer": "The duty to act competently, ethically and within the law when handling sensitive systems and data."
+  },
+  {
+    "question": "How do professional codes help avoid ethical hazards?",
+    "answer": "They provide guidance, clarify expectations and support consistent responsible behaviour."
+  }
+]
