@@ -4,7 +4,14 @@ import { Link, useParams } from "react-router"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FillInBlank } from "@/components/fill-in-blank"
-import { fetchQuestions, recordAttempt, type Question } from "@/lib/api"
+import {
+  fetchQuestions,
+  fetchQuestionStats,
+  recordAttempt,
+  type Question,
+} from "@/lib/api"
+import { ScoreDot } from "@/components/score-dot"
+import { cn } from "@/lib/utils"
 import { countBlanks, getCorrectAnswers, tokenizeAndBlank } from "@/lib/blanking"
 import { checkAnswers, type CheckResult } from "@/lib/checking"
 
@@ -17,6 +24,7 @@ export function StudyPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [results, setResults] = useState<CheckResult | null>(null)
+  const [scores, setScores] = useState<Record<string, number | null>>({})
 
   // Current question
   const currentQuestion = questions[currentIndex]
@@ -30,13 +38,25 @@ export function StudyPage() {
   // Get correct answers for comparison
   const correctAnswers = useMemo(() => getCorrectAnswers(tokens), [tokens])
 
-  // Fetch questions on mount
+  // Fetch questions and scores on mount
   useEffect(() => {
     if (!setId) return
 
     fetchQuestions(setId)
-      .then((qs) => {
+      .then(async (qs) => {
         setQuestions(qs)
+
+        // Fetch scores for all questions in parallel
+        const statsPromises = qs.map((q) =>
+          fetchQuestionStats(q.id).catch(() => null)
+        )
+        const statsResults = await Promise.all(statsPromises)
+
+        const scoreMap: Record<string, number | null> = {}
+        qs.forEach((q, i) => {
+          scoreMap[q.id] = statsResults[i]?.score ?? null
+        })
+        setScores(scoreMap)
         setLoading(false)
       })
       .catch((e) => {
@@ -70,6 +90,9 @@ export function StudyPage() {
     const isCorrect = checkResult.score >= 0.5
     try {
       await recordAttempt(currentQuestion.id, isCorrect)
+      // Refresh the score for this question
+      const stats = await fetchQuestionStats(currentQuestion.id)
+      setScores((prev) => ({ ...prev, [currentQuestion.id]: stats.score }))
     } catch (e) {
       // Silent failure - don't block UX for tracking
       console.error("Failed to record attempt:", e)
@@ -118,9 +141,21 @@ export function StudyPage() {
             ← Back
           </Button>
         </Link>
-        <span className="text-sm text-muted-foreground">
-          Question {currentIndex + 1} of {questions.length}
-        </span>
+        <div className="flex items-center gap-1.5">
+          {questions.map((q, i) => (
+            <button
+              key={q.id}
+              onClick={() => setCurrentIndex(i)}
+              className={cn(
+                "rounded-full p-0.5 transition-all",
+                i === currentIndex && "ring-2 ring-primary ring-offset-2"
+              )}
+              title={`Question ${i + 1}`}
+            >
+              <ScoreDot score={scores[q.id] ?? null} size="md" />
+            </button>
+          ))}
+        </div>
       </div>
 
       <Card>
