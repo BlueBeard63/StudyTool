@@ -97,7 +97,7 @@ export function StudyPage() {
       // Silent failure - don't block UX for tracking
       console.error("Failed to record attempt:", e)
     }
-  }, [values, correctAnswers, currentQuestion?.id])
+  }, [values, correctAnswers, currentQuestion])
 
   const handleNext = useCallback(() => {
     if (currentIndex < questions.length - 1) {
