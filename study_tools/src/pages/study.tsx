@@ -23,6 +23,7 @@ import {
 } from "@/lib/api"
 import { countBlanks, getCorrectAnswers, tokenizeAndBlank } from "@/lib/blanking"
 import { checkAnswers, type CheckResult } from "@/lib/checking"
+import { createSmartOrder, pickNextIndex } from "@/lib/ordering"
 import {
   createInitialSession,
   type QuestionResult,
@@ -58,8 +59,14 @@ export function StudyPage() {
   const [reviewCountdown, setReviewCountdown] = useState<number | null>(null)
   const reviewTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Derived state
-  const currentQuestion = questions[session.currentIndex]
+  // Derived state: use smart order for practice mode
+  const currentQuestion = useMemo(() => {
+    if (session.mode === "practice" && session.questionOrder.length > 0) {
+      const questionIndex = session.questionOrder[session.currentIndex]
+      return questions[questionIndex]
+    }
+    return questions[session.currentIndex]
+  }, [questions, session.currentIndex, session.mode, session.questionOrder])
 
   const tokens = useMemo(() => {
     if (!currentQuestion) return []
@@ -129,11 +136,16 @@ export function StudyPage() {
     if (reviewCountdown === null) return
 
     if (reviewCountdown <= 0) {
-      // Auto-advance to next question
-      setSession((prev) => ({
-        ...prev,
-        currentIndex: (prev.currentIndex + 1) % questions.length,
-      }))
+      // Auto-advance to next question using smart selection
+      setSession((prev) => {
+        const scoreArray = questions.map((q) => scores[q.id])
+        const nextIndex = pickNextIndex(scoreArray, prev.recentIndices)
+        return {
+          ...prev,
+          currentIndex: nextIndex,
+          recentIndices: [...prev.recentIndices, nextIndex],
+        }
+      })
       setReviewCountdown(null)
       return
     }
@@ -145,16 +157,29 @@ export function StudyPage() {
     return () => {
       if (reviewTimerRef.current) clearInterval(reviewTimerRef.current)
     }
-  }, [reviewCountdown, questions.length])
+  }, [reviewCountdown, questions, scores])
 
   const handleStart = useCallback(() => {
     const duration = selectedMode === "timed" ? selectedDuration : null
+
+    // Compute smart question order for practice mode
+    const scoreArray = questions.map((q) => scores[q.id])
+    const questionOrder =
+      selectedMode === "practice" ? createSmartOrder(scoreArray) : []
+
+    // For timed mode, pick first question using smart selection
+    const firstIndex =
+      selectedMode === "timed" ? pickNextIndex(scoreArray, []) : 0
+
     setSession({
       ...createInitialSession(selectedMode, duration),
       status: "in-progress",
       startTime: Date.now(),
+      questionOrder,
+      currentIndex: firstIndex,
+      recentIndices: selectedMode === "timed" ? [firstIndex] : [],
     })
-  }, [selectedMode, selectedDuration])
+  }, [selectedMode, selectedDuration, questions, scores])
 
   const handleChange = useCallback((blankIndex: number, value: string) => {
     setValues((prev) => {
@@ -226,11 +251,16 @@ export function StudyPage() {
   const handleSkipReview = useCallback(() => {
     // Skip the review countdown in timed mode
     setReviewCountdown(null)
-    setSession((prev) => ({
-      ...prev,
-      currentIndex: (prev.currentIndex + 1) % questions.length,
-    }))
-  }, [questions.length])
+    setSession((prev) => {
+      const scoreArray = questions.map((q) => scores[q.id])
+      const nextIndex = pickNextIndex(scoreArray, prev.recentIndices)
+      return {
+        ...prev,
+        currentIndex: nextIndex,
+        recentIndices: [...prev.recentIndices, nextIndex],
+      }
+    })
+  }, [questions, scores])
 
   const handleRetry = useCallback(() => {
     setSession(createInitialSession(selectedMode, selectedMode === "timed" ? selectedDuration : null))
@@ -354,19 +384,31 @@ export function StudyPage() {
           <TimerDisplay timeRemaining={session.timeRemaining} />
         ) : (
           <div className="flex items-center gap-1.5">
-            {questions.map((q, i) => (
-              <div
-                key={q.id}
-                className={cn(
-                  "rounded-full p-0.5",
-                  i === session.currentIndex &&
-                    "ring-2 ring-primary ring-offset-2",
-                  i < session.questionsAnswered && "opacity-50"
-                )}
-              >
-                <ScoreDot score={scores[q.id] ?? null} size="md" />
-              </div>
-            ))}
+            {questions.map((q, i) => {
+              // Find if this question is currently being shown
+              const isCurrentQuestion =
+                session.questionOrder.length > 0
+                  ? session.questionOrder[session.currentIndex] === i
+                  : session.currentIndex === i
+
+              // Check if already answered in this session
+              const isAnswered = session.results.some(
+                (r) => r.questionId === q.id
+              )
+
+              return (
+                <div
+                  key={q.id}
+                  className={cn(
+                    "rounded-full p-0.5",
+                    isCurrentQuestion && "ring-2 ring-primary ring-offset-2",
+                    isAnswered && "opacity-50"
+                  )}
+                >
+                  <ScoreDot score={scores[q.id] ?? null} size="md" />
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
