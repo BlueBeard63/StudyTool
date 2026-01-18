@@ -11,6 +11,8 @@ export interface SessionState {
   correctCount: number
   totalScore: number
   results: QuestionResult[]
+  questionOrder: number[] // For practice mode: pre-computed smart order
+  recentIndices: number[] // For timed mode: track recent questions
 }
 
 export interface QuestionResult {
@@ -37,6 +39,8 @@ export function createInitialSession(
     correctCount: 0,
     totalScore: 0,
     results: [],
+    questionOrder: [],
+    recentIndices: [],
   }
 }
 
