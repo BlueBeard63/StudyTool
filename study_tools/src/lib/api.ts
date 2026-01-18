@@ -43,3 +43,36 @@ export async function fetchQuestions(setId: string): Promise<Question[]> {
   if (!res.ok) throw new Error("Failed to fetch questions")
   return res.json()
 }
+
+export interface Attempt {
+  id: string
+  correct: boolean
+  createdAt: string
+}
+
+export interface QuestionStats {
+  question: Question
+  attempts: Attempt[]
+  totalAttempts: number
+  score: number | null
+}
+
+export async function recordAttempt(
+  questionId: string,
+  correct: boolean
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/attempts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ questionId, correct }),
+  })
+  if (!res.ok) throw new Error("Failed to record attempt")
+}
+
+export async function fetchQuestionStats(
+  questionId: string
+): Promise<QuestionStats> {
+  const res = await fetch(`${API_BASE}/questions/${questionId}/stats`)
+  if (!res.ok) throw new Error("Failed to fetch stats")
+  return res.json()
+}
