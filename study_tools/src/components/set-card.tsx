@@ -1,3 +1,5 @@
+import { Link } from "react-router"
+
 import {
   Card,
   CardHeader,
@@ -12,13 +14,15 @@ interface SetCardProps {
 
 export function SetCard({ set }: SetCardProps) {
   return (
-    <Card className="cursor-pointer transition-all hover:ring-2 hover:ring-primary/50">
-      <CardHeader>
-        <CardTitle>{set.name}</CardTitle>
-        <CardDescription>
-          {set.questionCount} question{set.questionCount !== 1 ? "s" : ""}
-        </CardDescription>
-      </CardHeader>
-    </Card>
+    <Link to={`/sets/${set.id}/study`}>
+      <Card className="cursor-pointer transition-all hover:ring-2 hover:ring-primary/50">
+        <CardHeader>
+          <CardTitle>{set.name}</CardTitle>
+          <CardDescription>
+            {set.questionCount} question{set.questionCount !== 1 ? "s" : ""}
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    </Link>
   )
 }
