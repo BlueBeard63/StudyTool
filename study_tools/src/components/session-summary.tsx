@@ -15,6 +15,12 @@ interface SessionSummaryProps {
   onBack: () => void
 }
 
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${s.toString().padStart(2, "0")}`
+}
+
 export function SessionSummary({
   session,
   setName,
@@ -23,10 +29,23 @@ export function SessionSummary({
 }: SessionSummaryProps) {
   const percentage = Math.round(session.totalScore * 100)
 
+  // Calculate time used for timed mode
+  const timeUsed =
+    session.mode === "timed" && session.timerDuration !== null
+      ? session.timerDuration - (session.timeRemaining ?? 0)
+      : null
+
+  const avgTimePerQuestion =
+    timeUsed !== null && session.questionsAnswered > 0
+      ? timeUsed / session.questionsAnswered
+      : null
+
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Session Complete!</CardTitle>
+        <CardTitle className="text-2xl">
+          {session.mode === "timed" ? "Time's Up!" : "Session Complete!"}
+        </CardTitle>
         <CardDescription>{setName}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -35,6 +54,16 @@ export function SessionSummary({
           <div className="mt-1 text-muted-foreground">
             {session.correctCount} of {session.questionsAnswered} correct
           </div>
+          {session.mode === "timed" && timeUsed !== null && (
+            <div className="mt-2 text-sm text-muted-foreground">
+              Time: {formatDuration(timeUsed)}
+              {avgTimePerQuestion !== null && (
+                <span className="ml-2">
+                  ({avgTimePerQuestion.toFixed(1)}s per question)
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="h-3 overflow-hidden rounded-full bg-muted">
