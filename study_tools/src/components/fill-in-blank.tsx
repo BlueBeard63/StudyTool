@@ -24,7 +24,7 @@ export function FillInBlank({
         if (token.isBlank) {
           const value = values[token.blankIndex] || ""
           const result = results?.[token.blankIndex]
-          const minWidth = Math.max(token.text.length * 0.6, 3)
+          const minWidth = Math.max(token.text.length + 1, 4)
 
           return (
             <span key={i} className="inline-flex flex-col items-center">
