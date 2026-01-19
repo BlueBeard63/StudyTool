@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router"
 
 import { RootLayout } from "@/components/layout/root-layout"
+import { ReviewPage } from "@/pages/review"
 import { SetDetailPage } from "@/pages/set-detail"
 import { SetsPage } from "@/pages/sets"
 import { StatsPage } from "@/pages/stats"
@@ -12,6 +13,7 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { index: true, element: <SetsPage /> },
+      { path: "review", element: <ReviewPage /> },
       { path: "sets/:setId", element: <SetDetailPage /> },
       { path: "sets/:setId/study", element: <StudyPage /> },
       { path: "stats", element: <StatsPage /> },
