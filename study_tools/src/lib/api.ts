@@ -16,6 +16,7 @@ export interface QuestionSet {
   name: string
   createdAt: string
   questionCount: number
+  dueCount?: number
 }
 
 export async function fetchSets(): Promise<QuestionSet[]> {
