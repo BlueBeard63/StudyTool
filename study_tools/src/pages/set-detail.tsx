@@ -45,6 +45,22 @@ function getScoreColor(score: number | null): string {
   return "bg-red-500"
 }
 
+function formatNextReview(nextReview: string | null | undefined): string | null {
+  if (!nextReview) return null
+
+  const reviewDate = new Date(nextReview)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  reviewDate.setHours(0, 0, 0, 0)
+
+  const diffDays = Math.floor((reviewDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 0) return "Overdue"
+  if (diffDays === 0) return "Due today"
+  if (diffDays === 1) return "Due tomorrow"
+  return `Due in ${diffDays} days`
+}
+
 export function SetDetailPage() {
   const { setId } = useParams<{ setId: string }>()
   const navigate = useNavigate()
@@ -443,6 +459,11 @@ export function SetDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-sm">{q.answer}</CardDescription>
+                  {formatNextReview(q.nextReview) && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatNextReview(q.nextReview)}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>
