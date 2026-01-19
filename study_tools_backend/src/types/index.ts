@@ -18,6 +18,10 @@ export interface Attempt {
   timestamp: string
 }
 
+export interface QuestionWithScore extends Question {
+  score: number | null
+}
+
 export interface QuestionSetRow {
   id: string
   name: string

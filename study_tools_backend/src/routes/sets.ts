@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express"
 import * as QuestionSet from "../models/question-set.js"
 import * as Question from "../models/question.js"
 import db from "../db/index.js"
+import { applySmartOrder } from "../lib/ordering.js"
 
 interface IdParams {
   id: string
@@ -132,6 +133,28 @@ router.post("/:id/questions", (req: Request<IdParams>, res: Response) => {
 
   const newQuestion = Question.create(req.params.id, question.trim(), answer.trim())
   res.status(201).json(newQuestion)
+})
+
+// GET /api/sets/:id/study - Get questions in smart order with scores
+router.get("/:id/study", (req: Request<IdParams>, res: Response) => {
+  const set = QuestionSet.getById(req.params.id)
+  if (!set) {
+    res.status(404).json({ error: "Question set not found" })
+    return
+  }
+
+  // Get questions with their scores
+  const questionsWithScores = Question.getBySetIdWithScores(req.params.id)
+
+  // Apply smart ordering (prioritizes low/null scores)
+  const scores = questionsWithScores.map((q) => q.score)
+  const orderedQuestions = applySmartOrder(questionsWithScores, scores)
+
+  // Apply limit if provided
+  const limit = parseInt(req.query.limit as string) || orderedQuestions.length
+  const limitedQuestions = orderedQuestions.slice(0, limit)
+
+  res.json({ questions: limitedQuestions })
 })
 
 export default router

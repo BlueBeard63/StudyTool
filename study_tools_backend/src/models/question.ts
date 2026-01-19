@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid"
 import db from "../db/index.js"
-import type { Question, QuestionRow } from "../types/index.js"
+import type { Question, QuestionRow, QuestionWithScore } from "../types/index.js"
+import { calculateWeightedScore } from "../lib/score.js"
 
 function rowToQuestion(row: QuestionRow): Question {
   return {
@@ -92,4 +93,59 @@ export function deleteById(id: string): boolean {
   const stmt = db.prepare("DELETE FROM questions WHERE id = ?")
   const result = stmt.run(id)
   return result.changes > 0
+}
+
+/**
+ * Get all questions for a set with their weighted scores.
+ * Efficiently fetches attempts and calculates scores in bulk.
+ */
+export function getBySetIdWithScores(setId: string): QuestionWithScore[] {
+  // Get all questions
+  const questions = getBySetId(setId)
+
+  if (questions.length === 0) return []
+
+  // Get all attempts for these questions in one query
+  const questionIds = questions.map((q) => q.id)
+  const placeholders = questionIds.map(() => "?").join(",")
+  const attemptsStmt = db.prepare(
+    `SELECT question_id, correct, timestamp
+     FROM attempts
+     WHERE question_id IN (${placeholders})
+     ORDER BY timestamp DESC`
+  )
+  const attemptRows = attemptsStmt.all(...questionIds) as Array<{
+    question_id: string
+    correct: number
+    timestamp: string
+  }>
+
+  // Group attempts by question
+  const attemptsByQuestion = new Map<
+    string,
+    Array<{ correct: boolean; timestamp: string }>
+  >()
+  for (const row of attemptRows) {
+    if (!attemptsByQuestion.has(row.question_id)) {
+      attemptsByQuestion.set(row.question_id, [])
+    }
+    attemptsByQuestion.get(row.question_id)!.push({
+      correct: row.correct === 1,
+      timestamp: row.timestamp,
+    })
+  }
+
+  // Calculate scores for each question
+  return questions.map((q) => {
+    const attempts = attemptsByQuestion.get(q.id) || []
+    const score = calculateWeightedScore(
+      attempts.map((a) => ({
+        id: "",
+        questionId: q.id,
+        correct: a.correct,
+        timestamp: a.timestamp,
+      }))
+    )
+    return { ...q, score }
+  })
 }
