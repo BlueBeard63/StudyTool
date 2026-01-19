@@ -44,6 +44,10 @@ export interface Question {
   answer: string
 }
 
+export interface QuestionWithScore extends Question {
+  score: number | null
+}
+
 export async function fetchQuestions(setId: string): Promise<Question[]> {
   const res = await fetch(`${API_BASE}/sets/${setId}/questions`)
   if (!res.ok) throw new Error("Failed to fetch questions")
@@ -69,6 +73,23 @@ export async function fetchQuestionsPaginated(
   )
   if (!res.ok) throw new Error("Failed to fetch questions")
   return res.json()
+}
+
+/**
+ * Fetch questions for study mode with smart ordering and scores.
+ * Returns questions ordered by score (prioritizes weak/unanswered questions).
+ */
+export async function fetchStudyQuestions(
+  setId: string,
+  limit?: number
+): Promise<QuestionWithScore[]> {
+  const url = limit
+    ? `${API_BASE}/sets/${setId}/study?limit=${limit}`
+    : `${API_BASE}/sets/${setId}/study`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error("Failed to fetch study questions")
+  const data = await res.json()
+  return data.questions
 }
 
 export interface Attempt {
