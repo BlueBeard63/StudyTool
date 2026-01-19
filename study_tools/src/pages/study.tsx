@@ -22,7 +22,6 @@ import {
   fetchStudyQuestions,
   recordAttempt,
   toggleQuestionBookmark,
-  type Question,
   type QuestionSet,
   type QuestionWithScore,
 } from "@/lib/api"
@@ -58,6 +57,7 @@ export function StudyPage() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>("medium")
   const [selectedInputMethod, setSelectedInputMethod] = useState<InputMethod>("typing")
   const [selectedQuestionCount, setSelectedQuestionCount] = useState<number | null>(32) // null = All
+  const [selectedBookmarkedOnly, setSelectedBookmarkedOnly] = useState(false)
 
   // Session state
   const [session, setSession] = useState<SessionState>(createInitialSession)
@@ -128,6 +128,11 @@ export function StudyPage() {
     wordToBlankMap.forEach((_, wordIndex) => used.add(wordIndex))
     return used
   }, [wordToBlankMap])
+
+  // Count bookmarked questions
+  const bookmarkedCount = useMemo(() => {
+    return questions.filter((q) => q.bookmarked).length
+  }, [questions])
 
   // Fetch set and questions on mount
   // Uses the study endpoint which returns questions in smart order with scores
@@ -220,10 +225,20 @@ export function StudyPage() {
   const handleStart = useCallback(() => {
     const duration = selectedMode === "timed" ? selectedDuration : null
 
+    // Filter to bookmarked only if selected
+    const activeQuestions = selectedBookmarkedOnly
+      ? questions.filter((q) => q.bookmarked)
+      : questions
+
+    // Update questions to the filtered set
+    if (selectedBookmarkedOnly) {
+      setQuestions(activeQuestions)
+    }
+
     // Questions are already in smart order from backend
     // For practice mode: use sequential indices (0, 1, 2, ...)
     // For timed mode: pick first using weighted random, track recent to avoid repeats
-    const scoreArray = questions.map((q) => scores[q.id])
+    const scoreArray = activeQuestions.map((q) => scores[q.id])
     const firstIndex =
       selectedMode === "timed" ? pickNextIndex(scoreArray, []) : 0
 
@@ -235,7 +250,7 @@ export function StudyPage() {
       currentIndex: firstIndex,
       recentIndices: selectedMode === "timed" ? [firstIndex] : [],
     })
-  }, [selectedMode, selectedDuration, selectedDifficulty, selectedInputMethod, questions, scores])
+  }, [selectedMode, selectedDuration, selectedDifficulty, selectedInputMethod, questions, scores, selectedBookmarkedOnly])
 
   const handleChange = useCallback((blankIndex: number, value: string) => {
     setValues((prev) => {
@@ -546,6 +561,28 @@ export function StudyPage() {
                   </Button>
                 ))}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                variant={selectedBookmarkedOnly ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedBookmarkedOnly(!selectedBookmarkedOnly)}
+                disabled={bookmarkedCount === 0}
+              >
+                <Star
+                  className={cn(
+                    "h-4 w-4 mr-1",
+                    selectedBookmarkedOnly && "fill-current"
+                  )}
+                />
+                Bookmarked only ({bookmarkedCount})
+              </Button>
+              {bookmarkedCount === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No bookmarked questions. Bookmark questions during study to enable this option.
+                </p>
+              )}
             </div>
 
             <Button onClick={handleStart} size="lg">
