@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
+import { Star } from "lucide-react"
 
 import {
   AlertDialog,
@@ -29,11 +30,13 @@ import {
   fetchQuestionsPaginated,
   fetchQuestionStats,
   fetchSet,
+  toggleQuestionBookmark,
   type Question,
   type QuestionSet,
   updateQuestion,
   updateSet,
 } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
 function getScoreColor(score: number | null): string {
   if (score === null) return "bg-gray-300 dark:bg-gray-600"
@@ -262,6 +265,28 @@ export function SetDetailPage() {
     setDeleteQuestionId(null)
   }, [deleteQuestionId, set])
 
+  // Toggle bookmark on a question
+  const handleToggleBookmark = useCallback(async (questionId: string) => {
+    const question = questions.find((q) => q.id === questionId)
+    if (!question) return
+    const newBookmarked = !question.bookmarked
+
+    // Optimistic update
+    setQuestions((prev) =>
+      prev.map((q) => (q.id === questionId ? { ...q, bookmarked: newBookmarked } : q))
+    )
+
+    try {
+      await toggleQuestionBookmark(questionId, newBookmarked)
+    } catch (e) {
+      // Revert on error
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === questionId ? { ...q, bookmarked: !newBookmarked } : q))
+      )
+      console.error("Failed to toggle bookmark:", e)
+    }
+  }, [questions])
+
   // Loading state
   if (loading) {
     return <div className="text-muted-foreground">Loading...</div>
@@ -351,6 +376,19 @@ export function SetDetailPage() {
                       {q.question}
                     </CardTitle>
                     <div className="flex shrink-0 gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleBookmark(q.id)}
+                        title={q.bookmarked ? "Remove bookmark" : "Bookmark question"}
+                      >
+                        <Star
+                          className={cn(
+                            "h-4 w-4",
+                            q.bookmarked && "fill-yellow-500 text-yellow-500"
+                          )}
+                        />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
