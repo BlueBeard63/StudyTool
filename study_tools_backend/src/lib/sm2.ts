@@ -5,6 +5,8 @@
  * https://www.supermemo.com/en/blog/application-of-a-computer-to-improve-the-results-obtained-in-working-with-the-supermemo-method
  */
 
+import * as Question from "../models/question.js"
+
 export interface SM2Input {
   quality: number // 0-5 (0=complete blackout, 5=perfect response)
   easeFactor: number // current EF (default 2.5)
@@ -92,4 +94,50 @@ export function scoreToQuality(score: number): number {
   if (score >= 0.3) return 2
   if (score > 0) return 1
   return 0
+}
+
+/**
+ * Process an attempt and update spaced repetition data for a question.
+ *
+ * This function combines the SM-2 algorithm with the Question model to:
+ * 1. Fetch the question's current SR data
+ * 2. Convert the score to a quality rating
+ * 3. Calculate new SR values
+ * 4. Update the question in the database
+ *
+ * @param questionId - The ID of the question
+ * @param score - The score from 0 to 1 (used to determine quality)
+ */
+export function processAttemptSR(questionId: string, score: number): void {
+  // Get the question
+  const question = Question.getById(questionId)
+  if (!question) {
+    // Graceful fail - question might have been deleted
+    return
+  }
+
+  // Map score to quality
+  const quality = scoreToQuality(score)
+
+  // Get current SR values with defaults
+  const currentEaseFactor = question.easeFactor ?? 2.5
+  const currentRepetitions = question.repetitions ?? 0
+  const currentIntervalDays = question.intervalDays ?? 0
+
+  // Calculate new SR values
+  const result = calculateSM2({
+    quality,
+    easeFactor: currentEaseFactor,
+    repetitions: currentRepetitions,
+    intervalDays: currentIntervalDays,
+  })
+
+  // Update the question with new SR data
+  Question.updateSRData(
+    questionId,
+    result.easeFactor,
+    result.repetitions,
+    result.intervalDays,
+    result.nextReview
+  )
 }
