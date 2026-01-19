@@ -10,6 +10,10 @@ function rowToQuestion(row: QuestionRow): Question {
     question: row.question,
     answer: row.answer,
     bookmarked: row.bookmarked === 1,
+    easeFactor: row.ease_factor,
+    repetitions: row.repetitions,
+    intervalDays: row.interval_days,
+    nextReview: row.next_review,
   }
 }
 
