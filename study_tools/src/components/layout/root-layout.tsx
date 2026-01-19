@@ -43,6 +43,9 @@ export function RootLayout() {
               <Link to="/stats" className="text-sm text-muted-foreground hover:text-foreground">
                 Stats
               </Link>
+              <Link to="/history" className="text-sm text-muted-foreground hover:text-foreground">
+                History
+              </Link>
             </nav>
           </div>
           <UploadDialog onSuccess={handleUploadSuccess} />
