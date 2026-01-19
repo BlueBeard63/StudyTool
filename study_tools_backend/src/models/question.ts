@@ -9,6 +9,7 @@ function rowToQuestion(row: QuestionRow): Question {
     setId: row.set_id,
     question: row.question,
     answer: row.answer,
+    bookmarked: row.bookmarked === 1,
   }
 }
 
@@ -93,6 +94,19 @@ export function deleteById(id: string): boolean {
   const stmt = db.prepare("DELETE FROM questions WHERE id = ?")
   const result = stmt.run(id)
   return result.changes > 0
+}
+
+export function toggleBookmark(id: string, bookmarked: boolean): Question | null {
+  const stmt = db.prepare("UPDATE questions SET bookmarked = ? WHERE id = ?")
+  const result = stmt.run(bookmarked ? 1 : 0, id)
+  if (result.changes === 0) return null
+  return getById(id)
+}
+
+export function getBookmarkedBySetId(setId: string): Question[] {
+  const stmt = db.prepare("SELECT * FROM questions WHERE set_id = ? AND bookmarked = 1")
+  const rows = stmt.all(setId) as QuestionRow[]
+  return rows.map(rowToQuestion)
 }
 
 /**
