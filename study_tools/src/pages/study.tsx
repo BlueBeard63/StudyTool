@@ -16,6 +16,7 @@ import { TimerDisplay } from "@/components/timer-display"
 import { WordBank } from "@/components/word-bank"
 import { WordBankBlank } from "@/components/word-bank-blank"
 import {
+  fetchQuestionStats,
   fetchSet,
   fetchStudyQuestions,
   recordAttempt,
