@@ -13,21 +13,24 @@ import { FillInBlank } from "@/components/fill-in-blank"
 import { ScoreDot } from "@/components/score-dot"
 import { SessionSummary } from "@/components/session-summary"
 import { TimerDisplay } from "@/components/timer-display"
+import { WordBank } from "@/components/word-bank"
+import { WordBankBlank } from "@/components/word-bank-blank"
 import {
-  fetchQuestions,
-  fetchQuestionStats,
   fetchSet,
+  fetchStudyQuestions,
   recordAttempt,
   type Question,
   type QuestionSet,
+  type QuestionWithScore,
 } from "@/lib/api"
 import { countBlanks, getCorrectAnswers, tokenizeAndBlank } from "@/lib/blanking"
 import { checkAnswers, type CheckResult } from "@/lib/checking"
-import { createSmartOrder, pickNextIndex } from "@/lib/ordering"
+import { pickNextIndex } from "@/lib/ordering"
 import {
   createInitialSession,
   DIFFICULTY_PERCENT,
   type Difficulty,
+  type InputMethod,
   type QuestionResult,
   type SessionMode,
   type SessionState,
@@ -40,7 +43,7 @@ export function StudyPage() {
 
   // Data state
   const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null)
-  const [questions, setQuestions] = useState<Question[]>([])
+  const [questions, setQuestions] = useState<QuestionWithScore[]>([])
   const [scores, setScores] = useState<Record<string, number | null>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -49,6 +52,7 @@ export function StudyPage() {
   const [selectedMode, setSelectedMode] = useState<SessionMode>("practice")
   const [selectedDuration, setSelectedDuration] = useState<number>(60)
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>("medium")
+  const [selectedInputMethod, setSelectedInputMethod] = useState<InputMethod>("typing")
 
   // Session state
   const [session, setSession] = useState<SessionState>(createInitialSession)
@@ -60,18 +64,18 @@ export function StudyPage() {
   const [hintsUsed, setHintsUsed] = useState(0)
   const [hintedBlanks, setHintedBlanks] = useState<Set<number>>(new Set())
 
+  // Word bank mode state
+  const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null)
+  const [wordToBlankMap, setWordToBlankMap] = useState<Map<number, number>>(new Map()) // wordIndex -> blankIndex
+
   // Timed mode: auto-advance countdown after submit
   const [reviewCountdown, setReviewCountdown] = useState<number | null>(null)
   const reviewTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Derived state: use smart order for practice mode
+  // Derived state: questions are already smart-ordered from backend
   const currentQuestion = useMemo(() => {
-    if (session.mode === "practice" && session.questionOrder.length > 0) {
-      const questionIndex = session.questionOrder[session.currentIndex]
-      return questions[questionIndex]
-    }
     return questions[session.currentIndex]
-  }, [questions, session.currentIndex, session.mode, session.questionOrder])
+  }, [questions, session.currentIndex])
 
   // Use session difficulty when in progress, otherwise use selected difficulty
   const activeDifficulty =
@@ -85,24 +89,55 @@ export function StudyPage() {
 
   const correctAnswers = useMemo(() => getCorrectAnswers(tokens), [tokens])
 
+  // Word bank: correct answers + decoys from other questions, shuffled
+  const bankWords = useMemo(() => {
+    // Build pool of decoy words from all OTHER answers in the set
+    const correctSet = new Set(correctAnswers.map((a) => a.toLowerCase()))
+    const decoyPool: string[] = []
+
+    for (const q of questions) {
+      if (q.id === currentQuestion?.id) continue // Skip current question
+      // Extract words from this answer
+      const words = q.answer.split(/\s+/).filter((w) => /[a-zA-Z]/.test(w))
+      for (const word of words) {
+        // Only add if not a correct answer for current question
+        if (!correctSet.has(word.toLowerCase())) {
+          decoyPool.push(word)
+        }
+      }
+    }
+
+    // Shuffle and select decoys (roughly half as many as correct answers)
+    const shuffledDecoys = [...decoyPool].sort(() => Math.random() - 0.5)
+    const numDecoys = Math.max(1, Math.ceil(correctAnswers.length / 2))
+    const selectedDecoys = shuffledDecoys.slice(0, numDecoys)
+
+    // Combine correct answers and decoys, then shuffle
+    const allWords = [...correctAnswers, ...selectedDecoys]
+    return allWords.sort(() => Math.random() - 0.5)
+  }, [correctAnswers, questions, currentQuestion?.id])
+
+  // Track which word bank indices have been used
+  const usedWordIndices = useMemo(() => {
+    const used = new Set<number>()
+    wordToBlankMap.forEach((_, wordIndex) => used.add(wordIndex))
+    return used
+  }, [wordToBlankMap])
+
   // Fetch set and questions on mount
+  // Uses the study endpoint which returns questions in smart order with scores
   useEffect(() => {
     if (!setId) return
 
-    Promise.all([fetchSet(setId), fetchQuestions(setId)])
-      .then(async ([set, qs]) => {
+    Promise.all([fetchSet(setId), fetchStudyQuestions(setId)])
+      .then(([set, questionsWithScores]) => {
         setQuestionSet(set)
-        setQuestions(qs)
+        setQuestions(questionsWithScores)
 
-        // Fetch scores for all questions in parallel
-        const statsPromises = qs.map((q) =>
-          fetchQuestionStats(q.id).catch(() => null)
-        )
-        const statsResults = await Promise.all(statsPromises)
-
+        // Extract scores from response
         const scoreMap: Record<string, number | null> = {}
-        qs.forEach((q, i) => {
-          scoreMap[q.id] = statsResults[i]?.score ?? null
+        questionsWithScores.forEach((q) => {
+          scoreMap[q.id] = q.score
         })
         setScores(scoreMap)
         setLoading(false)
@@ -122,6 +157,9 @@ export function StudyPage() {
     setReviewCountdown(null)
     setHintsUsed(0)
     setHintedBlanks(new Set())
+    // Reset word bank state
+    setSelectedWordIndex(null)
+    setWordToBlankMap(new Map())
   }, [tokens])
 
   // Timer countdown for timed mode
@@ -174,24 +212,22 @@ export function StudyPage() {
   const handleStart = useCallback(() => {
     const duration = selectedMode === "timed" ? selectedDuration : null
 
-    // Compute smart question order for practice mode
+    // Questions are already in smart order from backend
+    // For practice mode: use sequential indices (0, 1, 2, ...)
+    // For timed mode: pick first using weighted random, track recent to avoid repeats
     const scoreArray = questions.map((q) => scores[q.id])
-    const questionOrder =
-      selectedMode === "practice" ? createSmartOrder(scoreArray) : []
-
-    // For timed mode, pick first question using smart selection
     const firstIndex =
       selectedMode === "timed" ? pickNextIndex(scoreArray, []) : 0
 
     setSession({
-      ...createInitialSession(selectedMode, duration, selectedDifficulty),
+      ...createInitialSession(selectedMode, duration, selectedDifficulty, selectedInputMethod),
       status: "in-progress",
       startTime: Date.now(),
-      questionOrder,
+      questionOrder: [], // Not needed - questions already smart-ordered
       currentIndex: firstIndex,
       recentIndices: selectedMode === "timed" ? [firstIndex] : [],
     })
-  }, [selectedMode, selectedDuration, selectedDifficulty, questions, scores])
+  }, [selectedMode, selectedDuration, selectedDifficulty, selectedInputMethod, questions, scores])
 
   const handleChange = useCallback((blankIndex: number, value: string) => {
     setValues((prev) => {
@@ -200,6 +236,56 @@ export function StudyPage() {
       return next
     })
   }, [])
+
+  // Word bank: handle clicking an empty blank to place selected word
+  const handleBlankClick = useCallback(
+    (blankIndex: number) => {
+      if (selectedWordIndex === null) return
+
+      // Place word in blank
+      setValues((prev) => {
+        const next = [...prev]
+        next[blankIndex] = bankWords[selectedWordIndex]
+        return next
+      })
+
+      // Track which word is in which blank
+      setWordToBlankMap((prev) => {
+        const next = new Map(prev)
+        next.set(selectedWordIndex, blankIndex)
+        return next
+      })
+
+      // Deselect word
+      setSelectedWordIndex(null)
+    },
+    [selectedWordIndex, bankWords]
+  )
+
+  // Word bank: handle clicking a placed word to return it to bank
+  const handlePlacedWordClick = useCallback((blankIndex: number) => {
+    // Find which word is in this blank
+    let wordIndex: number | null = null
+    wordToBlankMap.forEach((bIdx, wIdx) => {
+      if (bIdx === blankIndex) wordIndex = wIdx
+    })
+
+    if (wordIndex === null) return
+
+    // Clear the blank
+    setValues((prev) => {
+      const next = [...prev]
+      next[blankIndex] = ""
+      return next
+    })
+
+    // Remove from mapping
+    setWordToBlankMap((prev) => {
+      const next = new Map(prev)
+      next.delete(wordIndex!)
+      return next
+    })
+  }, [wordToBlankMap])
 
   const handleHint = useCallback(() => {
     // Find empty blanks that haven't been hinted
@@ -300,8 +386,8 @@ export function StudyPage() {
   }, [questions, scores])
 
   const handleRetry = useCallback(() => {
-    setSession(createInitialSession(selectedMode, selectedMode === "timed" ? selectedDuration : null, selectedDifficulty))
-  }, [selectedMode, selectedDuration, selectedDifficulty])
+    setSession(createInitialSession(selectedMode, selectedMode === "timed" ? selectedDuration : null, selectedDifficulty, selectedInputMethod))
+  }, [selectedMode, selectedDuration, selectedDifficulty, selectedInputMethod])
 
   const handleBack = useCallback(() => {
     navigate("/")
@@ -398,6 +484,26 @@ export function StudyPage() {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Input Method</p>
+              <div className="flex gap-2">
+                <Button
+                  variant={selectedInputMethod === "typing" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedInputMethod("typing")}
+                >
+                  Typing
+                </Button>
+                <Button
+                  variant={selectedInputMethod === "wordbank" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedInputMethod("wordbank")}
+                >
+                  Word Bank
+                </Button>
+              </div>
+            </div>
+
             <Button onClick={handleStart} size="lg">
               Start Studying
             </Button>
@@ -439,10 +545,7 @@ export function StudyPage() {
           <div className="flex items-center gap-1.5">
             {questions.map((q, i) => {
               // Find if this question is currently being shown
-              const isCurrentQuestion =
-                session.questionOrder.length > 0
-                  ? session.questionOrder[session.currentIndex] === i
-                  : session.currentIndex === i
+              const isCurrentQuestion = session.currentIndex === i
 
               // Check if already answered in this session
               const isAnswered = session.results.some(
@@ -480,29 +583,53 @@ export function StudyPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <FillInBlank
-            tokens={tokens}
-            values={values}
-            onChange={handleChange}
-            disabled={submitted}
-            results={results?.blanks}
-          />
+          {session.inputMethod === "wordbank" ? (
+            <WordBankBlank
+              tokens={tokens}
+              values={values}
+              selectedWordIndex={selectedWordIndex}
+              onBlankClick={handleBlankClick}
+              onPlacedWordClick={handlePlacedWordClick}
+              disabled={submitted}
+              results={results?.blanks}
+            />
+          ) : (
+            <FillInBlank
+              tokens={tokens}
+              values={values}
+              onChange={handleChange}
+              disabled={submitted}
+              results={results?.blanks}
+            />
+          )}
+
+          {session.inputMethod === "wordbank" && !submitted && (
+            <WordBank
+              words={bankWords}
+              usedIndices={usedWordIndices}
+              selectedIndex={selectedWordIndex}
+              onSelect={setSelectedWordIndex}
+              disabled={submitted}
+            />
+          )}
 
           <div className="flex items-center gap-2 pt-2">
             {!submitted ? (
               <>
-                <Button
-                  onClick={handleHint}
-                  variant="outline"
-                  disabled={
-                    // Disable if all blanks filled or hinted
-                    values.every((v, i) => v.trim() || hintedBlanks.has(i)) ||
-                    // In timed mode, disable after 1 hint
-                    (session.mode === "timed" && hintsUsed >= 1)
-                  }
-                >
-                  Hint
-                </Button>
+                {session.inputMethod !== "wordbank" && (
+                  <Button
+                    onClick={handleHint}
+                    variant="outline"
+                    disabled={
+                      // Disable if all blanks filled or hinted
+                      values.every((v, i) => v.trim() || hintedBlanks.has(i)) ||
+                      // In timed mode, disable after 1 hint
+                      (session.mode === "timed" && hintsUsed >= 1)
+                    }
+                  >
+                    Hint
+                  </Button>
+                )}
                 <Button onClick={handleSubmit}>Check Answer</Button>
               </>
             ) : session.mode === "timed" ? (

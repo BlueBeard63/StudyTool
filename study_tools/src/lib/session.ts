@@ -1,5 +1,6 @@
 export type SessionMode = "practice" | "timed"
 export type Difficulty = "easy" | "medium" | "hard" | "extreme"
+export type InputMethod = "typing" | "wordbank"
 
 export const DIFFICULTY_PERCENT: Record<Difficulty, number> = {
   easy: 0.2,
@@ -12,6 +13,7 @@ export interface SessionState {
   status: "not-started" | "in-progress" | "completed"
   mode: SessionMode
   difficulty: Difficulty
+  inputMethod: InputMethod
   timerDuration: number | null
   timeRemaining: number | null
   startTime: number | null
@@ -37,12 +39,14 @@ export interface QuestionResult {
 export function createInitialSession(
   mode: SessionMode = "practice",
   timerDuration: number | null = null,
-  difficulty: Difficulty = "medium"
+  difficulty: Difficulty = "medium",
+  inputMethod: InputMethod = "typing"
 ): SessionState {
   return {
     status: "not-started",
     mode,
     difficulty,
+    inputMethod,
     timerDuration,
     timeRemaining: timerDuration,
     startTime: null,
