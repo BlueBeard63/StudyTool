@@ -53,6 +53,7 @@ export function StudyPage() {
   const [selectedDuration, setSelectedDuration] = useState<number>(60)
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>("medium")
   const [selectedInputMethod, setSelectedInputMethod] = useState<InputMethod>("typing")
+  const [selectedQuestionCount, setSelectedQuestionCount] = useState<number | null>(32) // null = All
 
   // Session state
   const [session, setSession] = useState<SessionState>(createInitialSession)
@@ -364,12 +365,16 @@ export function StudyPage() {
   }, [values, correctAnswers, currentQuestion, session.mode, hintsUsed])
 
   const handleNext = useCallback(() => {
-    if (session.currentIndex < questions.length - 1) {
+    const effectiveCount = Math.min(
+      selectedQuestionCount ?? questions.length,
+      questions.length
+    )
+    if (session.currentIndex < effectiveCount - 1) {
       setSession((prev) => ({ ...prev, currentIndex: prev.currentIndex + 1 }))
     } else {
       setSession((prev) => ({ ...prev, status: "completed" }))
     }
-  }, [session.currentIndex, questions.length])
+  }, [session.currentIndex, questions.length, selectedQuestionCount])
 
   const handleSkipReview = useCallback(() => {
     // Skip the review countdown in timed mode
@@ -504,6 +509,22 @@ export function StudyPage() {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Questions</p>
+              <div className="flex gap-2">
+                {[16, 32, 64, null].map((count) => (
+                  <Button
+                    key={count ?? "all"}
+                    variant={selectedQuestionCount === count ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedQuestionCount(count)}
+                  >
+                    {count ?? "All"}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             <Button onClick={handleStart} size="lg">
               Start Studying
             </Button>
@@ -528,7 +549,11 @@ export function StudyPage() {
   }
 
   // Session in progress - show question
-  const isLastQuestion = session.currentIndex >= questions.length - 1
+  const effectiveQuestionCount = Math.min(
+    selectedQuestionCount ?? questions.length,
+    questions.length
+  )
+  const isLastQuestion = session.currentIndex >= effectiveQuestionCount - 1
 
   return (
     <div className="space-y-6">
@@ -543,7 +568,7 @@ export function StudyPage() {
           <TimerDisplay timeRemaining={session.timeRemaining} />
         ) : (
           <div className="flex items-center gap-1.5">
-            {questions.map((q, i) => {
+            {questions.slice(0, effectiveQuestionCount).map((q, i) => {
               // Find if this question is currently being shown
               const isCurrentQuestion = session.currentIndex === i
 
@@ -578,7 +603,7 @@ export function StudyPage() {
             <span className="text-sm text-muted-foreground">
               {session.mode === "timed"
                 ? `#${session.questionsAnswered + 1}`
-                : `${session.currentIndex + 1} / ${questions.length}`}
+                : `${session.currentIndex + 1} / ${effectiveQuestionCount}`}
             </span>
           </div>
         </CardHeader>
