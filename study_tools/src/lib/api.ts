@@ -218,3 +218,34 @@ export async function fetchBookmarkedQuestions(
   if (!res.ok) throw new Error("Failed to fetch bookmarked questions")
   return res.json()
 }
+
+// Stats types and functions
+export interface StatsOverview {
+  total: number
+  correct: number
+  accuracy: number
+  streak: number
+  today: number
+  thisWeek: number
+  uniqueQuestions: number
+}
+
+export interface DailyStat {
+  date: string
+  count: number
+  correct: number
+  accuracy: number
+}
+
+export async function fetchStats(): Promise<StatsOverview> {
+  const res = await fetch(`${API_BASE}/stats`)
+  if (!res.ok) throw new Error("Failed to fetch stats")
+  return res.json()
+}
+
+export async function fetchDailyStats(days?: number): Promise<DailyStat[]> {
+  const params = days ? `?days=${days}` : ""
+  const res = await fetch(`${API_BASE}/stats/daily${params}`)
+  if (!res.ok) throw new Error("Failed to fetch daily stats")
+  return res.json()
+}
