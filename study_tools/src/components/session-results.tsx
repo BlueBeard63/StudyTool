@@ -27,20 +27,28 @@ export function SessionResults({
 }: SessionResultsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("all")
 
+  // Filtering logic:
+  // - Correct: score === 1 (all blanks correct)
+  // - Partial: score > 0 && score < 1 (some blanks correct)
+  // - Wrong: score === 0 (no blanks correct)
+  const isCorrect = (r: QuestionResult) => r.score === 1
+  const isPartial = (r: QuestionResult) => r.score > 0 && r.score < 1
+  const isWrong = (r: QuestionResult) => r.score === 0
+
   // Count results by category
-  const correctCount = results.filter((r) => r.score === 1).length
-  const partialCount = results.filter((r) => r.score > 0 && r.score < 1).length
-  const wrongCount = results.filter((r) => r.score === 0).length
+  const correctCount = results.filter(isCorrect).length
+  const partialCount = results.filter(isPartial).length
+  const wrongCount = results.filter(isWrong).length
 
   // Filter results based on active tab
   const filteredResults = results.filter((r) => {
     switch (activeTab) {
       case "correct":
-        return r.score === 1
+        return isCorrect(r)
       case "partial":
-        return r.score > 0 && r.score < 1
+        return isPartial(r)
       case "wrong":
-        return r.score === 0
+        return isWrong(r)
       default:
         return true
     }
