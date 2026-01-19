@@ -124,14 +124,23 @@ export function SessionResults({
 
       {/* Result cards */}
       <div className="space-y-4">
-        {filteredResults.map((result) => (
-          <ResultCard
-            key={result.questionId}
-            result={result}
-            bookmarked={bookmarks[result.questionId] ?? false}
-            onToggleBookmark={onToggleBookmark}
-          />
-        ))}
+        {filteredResults.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {activeTab === "correct" && "No fully correct answers yet"}
+            {activeTab === "partial" && "No partial answers"}
+            {activeTab === "wrong" && "No wrong answers - great job!"}
+            {activeTab === "all" && "No questions answered"}
+          </div>
+        ) : (
+          filteredResults.map((result) => (
+            <ResultCard
+              key={result.questionId}
+              result={result}
+              bookmarked={bookmarks[result.questionId] ?? false}
+              onToggleBookmark={onToggleBookmark}
+            />
+          ))
+        )}
       </div>
 
       {/* Action buttons */}
