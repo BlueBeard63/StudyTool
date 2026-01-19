@@ -21,6 +21,21 @@ export interface Attempt {
   questionId: string
   correct: boolean
   timestamp: string
+  sessionId?: string | null
+}
+
+export interface Session {
+  id: string
+  setId: string
+  mode: "practice" | "timed"
+  difficulty: "easy" | "medium" | "hard" | "extreme"
+  inputMethod: "typing" | "wordbank"
+  duration: number | null
+  startedAt: string
+  completedAt: string
+  score: number
+  questionsAnswered: number
+  correctCount: number
 }
 
 export interface QuestionWithScore extends Question {
@@ -50,4 +65,19 @@ export interface AttemptRow {
   question_id: string
   correct: number
   timestamp: string
+  session_id: string | null
+}
+
+export interface SessionRow {
+  id: string
+  set_id: string
+  mode: string
+  difficulty: string
+  input_method: string
+  duration: number | null
+  started_at: string
+  completed_at: string
+  score: number
+  questions_answered: number
+  correct_count: number
 }
