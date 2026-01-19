@@ -522,6 +522,11 @@ export function StudyPage() {
                   >
                     Custom
                   </Button>
+                  {showCustomInput && ![60, 180, 300].includes(selectedDuration) && (
+                    <span className="inline-flex items-center px-2 py-1 text-sm font-medium bg-primary text-primary-foreground rounded">
+                      {selectedDuration / 60} min
+                    </span>
+                  )}
                 </div>
                 {showCustomInput && (
                   <div className="flex items-center gap-2">
