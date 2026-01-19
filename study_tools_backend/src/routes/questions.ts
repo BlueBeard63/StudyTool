@@ -59,4 +59,21 @@ router.delete("/:id", (req: Request<IdParams>, res: Response) => {
   res.status(204).send()
 })
 
+// PUT /api/questions/:id/bookmark - Toggle bookmark on a question
+router.put("/:id/bookmark", (req: Request<IdParams>, res: Response) => {
+  const { bookmarked } = req.body
+
+  if (typeof bookmarked !== "boolean") {
+    res.status(400).json({ error: "bookmarked (boolean) is required" })
+    return
+  }
+
+  const updated = Question.toggleBookmark(req.params.id, bookmarked)
+  if (!updated) {
+    res.status(404).json({ error: "Question not found" })
+    return
+  }
+  res.json(updated)
+})
+
 export default router
