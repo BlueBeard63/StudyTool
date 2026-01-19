@@ -26,6 +26,8 @@ import { checkAnswers, type CheckResult } from "@/lib/checking"
 import { createSmartOrder, pickNextIndex } from "@/lib/ordering"
 import {
   createInitialSession,
+  DIFFICULTY_PERCENT,
+  type Difficulty,
   type QuestionResult,
   type SessionMode,
   type SessionState,
@@ -46,6 +48,7 @@ export function StudyPage() {
   // Mode selection state (before session starts)
   const [selectedMode, setSelectedMode] = useState<SessionMode>("practice")
   const [selectedDuration, setSelectedDuration] = useState<number>(60)
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>("medium")
 
   // Session state
   const [session, setSession] = useState<SessionState>(createInitialSession)
@@ -70,10 +73,15 @@ export function StudyPage() {
     return questions[session.currentIndex]
   }, [questions, session.currentIndex, session.mode, session.questionOrder])
 
+  // Use session difficulty when in progress, otherwise use selected difficulty
+  const activeDifficulty =
+    session.status === "in-progress" ? session.difficulty : selectedDifficulty
+
   const tokens = useMemo(() => {
     if (!currentQuestion) return []
-    return tokenizeAndBlank(currentQuestion.answer)
-  }, [currentQuestion])
+    const percent = DIFFICULTY_PERCENT[activeDifficulty]
+    return tokenizeAndBlank(currentQuestion.answer, percent)
+  }, [currentQuestion, activeDifficulty])
 
   const correctAnswers = useMemo(() => getCorrectAnswers(tokens), [tokens])
 
@@ -176,14 +184,14 @@ export function StudyPage() {
       selectedMode === "timed" ? pickNextIndex(scoreArray, []) : 0
 
     setSession({
-      ...createInitialSession(selectedMode, duration),
+      ...createInitialSession(selectedMode, duration, selectedDifficulty),
       status: "in-progress",
       startTime: Date.now(),
       questionOrder,
       currentIndex: firstIndex,
       recentIndices: selectedMode === "timed" ? [firstIndex] : [],
     })
-  }, [selectedMode, selectedDuration, questions, scores])
+  }, [selectedMode, selectedDuration, selectedDifficulty, questions, scores])
 
   const handleChange = useCallback((blankIndex: number, value: string) => {
     setValues((prev) => {
@@ -292,8 +300,8 @@ export function StudyPage() {
   }, [questions, scores])
 
   const handleRetry = useCallback(() => {
-    setSession(createInitialSession(selectedMode, selectedMode === "timed" ? selectedDuration : null))
-  }, [selectedMode, selectedDuration])
+    setSession(createInitialSession(selectedMode, selectedMode === "timed" ? selectedDuration : null, selectedDifficulty))
+  }, [selectedMode, selectedDuration, selectedDifficulty])
 
   const handleBack = useCallback(() => {
     navigate("/")
@@ -373,6 +381,22 @@ export function StudyPage() {
                 ))}
               </div>
             )}
+
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Difficulty</p>
+              <div className="flex gap-2">
+                {(["easy", "medium", "hard", "extreme"] as const).map((diff) => (
+                  <Button
+                    key={diff}
+                    variant={selectedDifficulty === diff ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedDifficulty(diff)}
+                  >
+                    {diff.charAt(0).toUpperCase() + diff.slice(1)}
+                  </Button>
+                ))}
+              </div>
+            </div>
 
             <Button onClick={handleStart} size="lg">
               Start Studying
