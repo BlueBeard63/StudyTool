@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
+import { Area, AreaChart, XAxis, YAxis } from "recharts"
 import { Flame } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
 import {
   fetchDailyStats,
   fetchStats,
@@ -13,6 +20,13 @@ function formatDayLabel(dateStr: string): string {
   const date = new Date(dateStr + "T00:00:00")
   return date.toLocaleDateString("en-US", { weekday: "short" })
 }
+
+const chartConfig = {
+  count: {
+    label: "Attempts",
+    color: "hsl(142, 76%, 36%)",
+  },
+} satisfies ChartConfig
 
 export function StatsPage() {
   const [stats, setStats] = useState<StatsOverview | null>(null)
@@ -120,7 +134,7 @@ export function StatsPage() {
 function DailyActivityChart({ dailyStats }: { dailyStats: DailyStat[] }) {
   // Build data for last 7 days, filling in missing days with zeros
   const chartData = useMemo(() => {
-    const days: Array<{ date: string; count: number; accuracy: number }> = []
+    const days: Array<{ date: string; day: string; count: number; accuracy: number }> = []
     const today = new Date()
 
     // Create map of existing data
@@ -135,6 +149,7 @@ function DailyActivityChart({ dailyStats }: { dailyStats: DailyStat[] }) {
       const existing = dataMap.get(dateStr)
       days.push({
         date: dateStr,
+        day: formatDayLabel(dateStr),
         count: existing?.count ?? 0,
         accuracy: existing?.accuracy ?? 0,
       })
@@ -142,11 +157,6 @@ function DailyActivityChart({ dailyStats }: { dailyStats: DailyStat[] }) {
 
     return days
   }, [dailyStats])
-
-  const maxCount = useMemo(
-    () => Math.max(...chartData.map((d) => d.count), 1),
-    [chartData]
-  )
 
   if (chartData.every((d) => d.count === 0)) {
     return (
@@ -156,73 +166,59 @@ function DailyActivityChart({ dailyStats }: { dailyStats: DailyStat[] }) {
     )
   }
 
-  // Build SVG path for area chart
-  const chartHeight = 120
-  const chartWidth = 100 // percentage-based
-  const points = chartData.map((day, i) => {
-    const x = (i / (chartData.length - 1)) * chartWidth
-    const y = chartHeight - (day.count / maxCount) * chartHeight
-    return { x, y, ...day }
-  })
-
-  // Create smooth line path
-  const linePath = points
-    .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
-    .join(" ")
-
-  // Create area path (line + close to bottom)
-  const areaPath = `${linePath} L ${chartWidth} ${chartHeight} L 0 ${chartHeight} Z`
-
   return (
-    <div className="space-y-2">
-      <svg
-        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-        preserveAspectRatio="none"
-        className="h-32 w-full"
+    <ChartContainer config={chartConfig} className="h-40 w-full">
+      <AreaChart
+        data={chartData}
+        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
       >
-        {/* Gradient definition */}
         <defs>
-          <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgb(34, 197, 94)" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="rgb(34, 197, 94)" stopOpacity="0.05" />
+          <linearGradient id="fillCount" x1="0" y1="0" x2="0" y2="1">
+            <stop
+              offset="5%"
+              stopColor="var(--color-count)"
+              stopOpacity={0.4}
+            />
+            <stop
+              offset="95%"
+              stopColor="var(--color-count)"
+              stopOpacity={0.05}
+            />
           </linearGradient>
         </defs>
-
-        {/* Area fill */}
-        <path d={areaPath} fill="url(#areaGradient)" />
-
-        {/* Line stroke */}
-        <path
-          d={linePath}
-          fill="none"
-          stroke="rgb(34, 197, 94)"
-          strokeWidth="2"
-          vectorEffect="non-scaling-stroke"
+        <XAxis
+          dataKey="day"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
         />
-
-        {/* Data points */}
-        {points.map((p, i) => (
-          <circle
-            key={i}
-            cx={p.x}
-            cy={p.y}
-            r="3"
-            fill="rgb(34, 197, 94)"
-            vectorEffect="non-scaling-stroke"
-          >
-            <title>{`${p.count} attempts, ${p.accuracy}% accuracy`}</title>
-          </circle>
-        ))}
-      </svg>
-
-      {/* Date labels */}
-      <div className="flex justify-between px-1">
-        {chartData.map((day) => (
-          <span key={day.date} className="text-xs text-muted-foreground">
-            {formatDayLabel(day.date)}
-          </span>
-        ))}
-      </div>
-    </div>
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          allowDecimals={false}
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              labelFormatter={(_, payload) => {
+                if (payload?.[0]?.payload) {
+                  const data = payload[0].payload as { accuracy: number }
+                  return `${data.accuracy}% accuracy`
+                }
+                return ""
+              }}
+            />
+          }
+        />
+        <Area
+          type="monotone"
+          dataKey="count"
+          stroke="var(--color-count)"
+          strokeWidth={2}
+          fill="url(#fillCount)"
+        />
+      </AreaChart>
+    </ChartContainer>
   )
 }
