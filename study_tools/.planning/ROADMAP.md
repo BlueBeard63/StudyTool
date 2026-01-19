@@ -19,6 +19,17 @@ A functional fill-in-the-blank study application with progress tracking.
 | 9 | Timed Mode | Alternative study mode with configurable timer, answer-as-many-as-possible flow | complete |
 | 10 | Smart Ordering | Question selection that prioritizes weak areas (red/orange) over well-known material (green) | complete |
 
+## Milestone 2: Set Management
+
+Enhanced set and question management capabilities.
+
+### Phases
+
+| # | Phase | Goal | Status |
+|---|-------|------|--------|
+| 11 | Set Management | View questions in a set, rename/delete sets, add/edit/delete questions with paginated list | complete |
+| 11.1 | Dynamic Input Width | Size fill-in-the-blank inputs to match expected answer width | complete |
+
 ### Phase Details
 
 #### Phase 1: Backend Foundation
@@ -152,6 +163,34 @@ A functional fill-in-the-blank study application with progress tracking.
 - Higher probability for low-score questions
 - Configurable (or automatic) blend to occasionally include known material
 - Integration with both study modes
+
+**Research:** None required
+
+---
+
+#### Phase 11: Set Management
+**Goal:** View questions in a set, rename/delete sets, add/edit/delete questions with paginated list
+
+**Delivers:**
+- Set detail view showing all questions (paginated, 32 at a time)
+- Infinite scroll for loading more questions
+- Rename set functionality
+- Delete set functionality
+- Add new question to set
+- Edit existing question
+- Delete question from set
+
+**Research:** None required
+
+---
+
+#### Phase 11.1: Dynamic Input Width for Study Blanks (INSERTED)
+**Goal:** Size fill-in-the-blank input fields to match the width of the expected answer
+
+**Delivers:**
+- Input fields sized to fit the full answer text
+- Prevents inputs from being too narrow for longer answers
+- Maintains visual consistency across different answer lengths
 
 **Research:** None required
 

@@ -22,6 +22,7 @@ export interface QuestionResult {
   score: number
   userAnswers: string[]
   correctAnswers: string[]
+  hintsUsed?: number
 }
 
 export function createInitialSession(

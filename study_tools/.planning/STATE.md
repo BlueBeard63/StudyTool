@@ -2,9 +2,9 @@
 
 ## Current Position
 
-**Milestone:** 1 — Core Study Tool
-**Phase:** Complete
-**Status:** Milestone 1 finished
+**Milestone:** 2 — Set Management
+**Phase:** 11.1 — Dynamic Input Width for Study Blanks
+**Status:** Complete
 
 ## Progress
 
@@ -23,8 +23,21 @@
 | 9 | Timed Mode | complete | [SUMMARY](phases/09-timed-mode/9-1-SUMMARY.md) |
 | 10 | Smart Ordering | complete | [SUMMARY](phases/10-smart-ordering/10-1-SUMMARY.md) |
 
+### Milestone 2: Set Management
+
+| Phase | Name | Status | Plans |
+|-------|------|--------|-------|
+| 11 | Set Management | complete | [SUMMARY](phases/11-set-management/11-1-SUMMARY.md) |
+| 11.1 | Dynamic Input Width | complete | [SUMMARY](phases/11.1-dynamic-input-width/11.1-1-SUMMARY.md) |
+
 ## Recent Activity
 
+- 2026-01-19: Phase 11.1 complete — Dynamic Input Width (1 commit)
+- 2026-01-19: Phase 11.1 plan created (11.1-1-PLAN.md)
+- 2026-01-19: Phase 11.1 inserted — Dynamic Input Width for Study Blanks (URGENT)
+- 2026-01-18: Phase 11 complete — Set Management (4 commits)
+- 2026-01-18: Phase 11 plan created (11-1-PLAN.md)
+- 2026-01-18: Phase 11 added — Set Management (Milestone 2)
 - 2026-01-18: Phase 10 complete — Smart Ordering (3 commits)
 - 2026-01-18: Phase 10 plan created (10-1-PLAN.md)
 - 2026-01-18: Milestone 1 complete!

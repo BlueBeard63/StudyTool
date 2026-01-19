@@ -54,6 +54,8 @@ export function StudyPage() {
   const [values, setValues] = useState<string[]>([])
   const [submitted, setSubmitted] = useState(false)
   const [results, setResults] = useState<CheckResult | null>(null)
+  const [hintsUsed, setHintsUsed] = useState(0)
+  const [hintedBlanks, setHintedBlanks] = useState<Set<number>>(new Set())
 
   // Timed mode: auto-advance countdown after submit
   const [reviewCountdown, setReviewCountdown] = useState<number | null>(null)
@@ -110,6 +112,8 @@ export function StudyPage() {
     setSubmitted(false)
     setResults(null)
     setReviewCountdown(null)
+    setHintsUsed(0)
+    setHintedBlanks(new Set())
   }, [tokens])
 
   // Timer countdown for timed mode
@@ -189,6 +193,30 @@ export function StudyPage() {
     })
   }, [])
 
+  const handleHint = useCallback(() => {
+    // Find empty blanks that haven't been hinted
+    const emptyBlanks = values
+      .map((v, i) => ({ value: v, index: i }))
+      .filter((b) => !b.value.trim() && !hintedBlanks.has(b.index))
+
+    if (emptyBlanks.length === 0) return
+
+    // Pick random empty blank
+    const randomBlank =
+      emptyBlanks[Math.floor(Math.random() * emptyBlanks.length)]
+
+    // Fill with correct answer
+    setValues((prev) => {
+      const next = [...prev]
+      next[randomBlank.index] = correctAnswers[randomBlank.index]
+      return next
+    })
+
+    // Track the hint
+    setHintsUsed((prev) => prev + 1)
+    setHintedBlanks((prev) => new Set([...prev, randomBlank.index]))
+  }, [values, correctAnswers, hintedBlanks])
+
   const handleSubmit = useCallback(async () => {
     const checkResult = checkAnswers(values, correctAnswers)
     setResults(checkResult)
@@ -204,6 +232,7 @@ export function StudyPage() {
       score: checkResult.score,
       userAnswers: values,
       correctAnswers,
+      hintsUsed,
     }
 
     setSession((prev) => {
@@ -238,7 +267,7 @@ export function StudyPage() {
     } catch (e) {
       console.error("Failed to record attempt:", e)
     }
-  }, [values, correctAnswers, currentQuestion, session.mode])
+  }, [values, correctAnswers, currentQuestion, session.mode, hintsUsed])
 
   const handleNext = useCallback(() => {
     if (session.currentIndex < questions.length - 1) {
@@ -437,13 +466,32 @@ export function StudyPage() {
 
           <div className="flex items-center gap-2 pt-2">
             {!submitted ? (
-              <Button onClick={handleSubmit}>Check Answer</Button>
+              <>
+                <Button
+                  onClick={handleHint}
+                  variant="outline"
+                  disabled={
+                    // Disable if all blanks filled or hinted
+                    values.every((v, i) => v.trim() || hintedBlanks.has(i)) ||
+                    // In timed mode, disable after 1 hint
+                    (session.mode === "timed" && hintsUsed >= 1)
+                  }
+                >
+                  Hint
+                </Button>
+                <Button onClick={handleSubmit}>Check Answer</Button>
+              </>
             ) : session.mode === "timed" ? (
               <>
                 {results && (
                   <div className="flex-1 text-sm font-medium">
                     Score: {results.correctCount} of {results.totalBlanks}{" "}
                     correct
+                    {hintsUsed > 0 && (
+                      <span className="ml-2 text-muted-foreground">
+                        ({hintsUsed} hint{hintsUsed !== 1 ? "s" : ""} used)
+                      </span>
+                    )}
                     {reviewCountdown !== null && (
                       <span className="ml-2 text-muted-foreground">
                         Next in {reviewCountdown}s
@@ -464,6 +512,11 @@ export function StudyPage() {
                     <span className="ml-1 text-muted-foreground">
                       ({Math.round(results.score * 100)}%)
                     </span>
+                    {hintsUsed > 0 && (
+                      <span className="ml-2 text-muted-foreground">
+                        ({hintsUsed} hint{hintsUsed !== 1 ? "s" : ""} used)
+                      </span>
+                    )}
                   </div>
                 )}
                 <Button onClick={handleNext}>
