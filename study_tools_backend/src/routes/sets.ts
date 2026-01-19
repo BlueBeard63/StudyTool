@@ -16,6 +16,7 @@ router.get("/", (_req: Request, res: Response) => {
   const setsWithCounts = sets.map((set) => ({
     ...set,
     questionCount: QuestionSet.getQuestionCount(set.id),
+    dueCount: Question.countDueBySetId(set.id),
   }))
   res.json(setsWithCounts)
 })

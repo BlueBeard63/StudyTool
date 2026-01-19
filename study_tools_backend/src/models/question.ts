@@ -144,6 +144,15 @@ export function getDueQuestions(setId?: string): Question[] {
   return rows.map(rowToQuestion)
 }
 
+export function countDueBySetId(setId: string): number {
+  const stmt = db.prepare(
+    `SELECT COUNT(*) as count FROM questions
+     WHERE set_id = ? AND (next_review <= DATE('now') OR next_review IS NULL)`
+  )
+  const row = stmt.get(setId) as { count: number }
+  return row.count
+}
+
 /**
  * Get all questions for a set with their weighted scores.
  * Efficiently fetches attempts and calculates scores in bulk.
