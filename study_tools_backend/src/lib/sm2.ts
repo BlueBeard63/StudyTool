@@ -73,3 +73,23 @@ export function calculateSM2(input: SM2Input): SM2Result {
     nextReview,
   }
 }
+
+/**
+ * Convert a score (0-1) to SM-2 quality rating (0-5).
+ *
+ * Mapping:
+ * - score === 1.0 -> 5 (perfect)
+ * - score >= 0.8 -> 4 (correct with hesitation)
+ * - score >= 0.5 -> 3 (correct with difficulty)
+ * - score >= 0.3 -> 2 (incorrect, easy to recall)
+ * - score > 0 -> 1 (incorrect, remembered)
+ * - score === 0 -> 0 (complete blackout)
+ */
+export function scoreToQuality(score: number): number {
+  if (score === 1.0) return 5
+  if (score >= 0.8) return 4
+  if (score >= 0.5) return 3
+  if (score >= 0.3) return 2
+  if (score > 0) return 1
+  return 0
+}
