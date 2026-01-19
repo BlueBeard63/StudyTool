@@ -128,6 +128,22 @@ export function updateSRData(
   return getById(id)
 }
 
+export function getDueQuestions(setId?: string): Question[] {
+  let query = `SELECT * FROM questions WHERE next_review <= DATE('now') OR next_review IS NULL`
+  const params: string[] = []
+
+  if (setId) {
+    query += ` AND set_id = ?`
+    params.push(setId)
+  }
+
+  query += ` ORDER BY next_review ASC`
+
+  const stmt = db.prepare(query)
+  const rows = stmt.all(...params) as QuestionRow[]
+  return rows.map(rowToQuestion)
+}
+
 /**
  * Get all questions for a set with their weighted scores.
  * Efficiently fetches attempts and calculates scores in bulk.

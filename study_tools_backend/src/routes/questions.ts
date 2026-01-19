@@ -9,6 +9,13 @@ interface IdParams {
 
 const router = Router()
 
+// GET /api/questions/due - Get questions due for review
+router.get("/due", (req: Request, res: Response) => {
+  const setId = req.query.setId as string | undefined
+  const questions = Question.getDueQuestions(setId)
+  res.json(questions)
+})
+
 // GET /api/questions/:id/stats - Get question stats with attempt history
 router.get("/:id/stats", (req: Request<IdParams>, res: Response) => {
   const question = Question.getById(req.params.id)
