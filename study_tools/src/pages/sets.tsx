@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router"
 
 import { SetCard } from "@/components/set-card"
+import { DueReviewSection } from "@/components/due-review-section"
 import { fetchSets, type QuestionSet } from "@/lib/api"
 
 export function SetsPage() {
+  const navigate = useNavigate()
   const [sets, setSets] = useState<QuestionSet[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Calculate total due count from all sets
+  const totalDue = sets.reduce((sum, set) => sum + (set.dueCount || 0), 0)
 
   useEffect(() => {
     fetchSets()
@@ -33,10 +39,16 @@ export function SetsPage() {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {sets.map((set) => (
-        <SetCard key={set.id} set={set} />
-      ))}
+    <div>
+      <DueReviewSection
+        totalDue={totalDue}
+        onStartReview={() => navigate("/review")}
+      />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {sets.map((set) => (
+          <SetCard key={set.id} set={set} />
+        ))}
+      </div>
     </div>
   )
 }
