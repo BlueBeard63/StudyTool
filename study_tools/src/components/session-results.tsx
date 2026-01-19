@@ -86,7 +86,7 @@ export function SessionResults({
   return (
     <div className="space-y-6">
       {/* Summary stats header */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-3">
         <h2 className="text-2xl font-bold">
           {mode === "timed" ? "Time's Up!" : "Session Complete!"}
         </h2>
@@ -108,14 +108,23 @@ export function SessionResults({
         </div>
       </div>
 
+      {/* Action buttons */}
+      <div className="flex justify-center gap-3">
+        <Button onClick={onRetry} variant="outline">
+          Study Again
+        </Button>
+        <Button onClick={onBack}>Back to Sets</Button>
+      </div>
+
       {/* Tab buttons */}
-      <div className="flex flex-wrap gap-2 justify-center">
+      <div className="flex flex-wrap gap-2 justify-center pt-4 border-t">
         {tabs.map((tab) => (
           <Button
             key={tab.key}
             variant={activeTab === tab.key ? "default" : "outline"}
             size="sm"
             onClick={() => setActiveTab(tab.key)}
+            className="transition-all"
           >
             {tab.label} ({tab.count})
           </Button>
@@ -141,14 +150,6 @@ export function SessionResults({
             />
           ))
         )}
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex justify-center gap-3 pt-2">
-        <Button onClick={onRetry} variant="outline">
-          Study Again
-        </Button>
-        <Button onClick={onBack}>Back to Sets</Button>
       </div>
     </div>
   )

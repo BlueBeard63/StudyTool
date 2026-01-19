@@ -23,13 +23,13 @@ export function ResultCard({
   const totalBlanks = result.correctAnswers.length
 
   return (
-    <Card>
+    <Card className="hover:ring-2 hover:ring-primary/20 transition-all">
       <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="text-sm font-medium">{result.question}</div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="text-sm font-medium leading-relaxed">{result.question}</div>
           <button
             onClick={() => onToggleBookmark(result.questionId)}
-            className="shrink-0 text-muted-foreground hover:text-yellow-500 transition-colors"
+            className="shrink-0 p-1 -m-1 text-muted-foreground hover:text-yellow-500 transition-colors rounded-md hover:bg-muted"
             title={bookmarked ? "Remove bookmark" : "Bookmark question"}
           >
             <Star
@@ -41,7 +41,7 @@ export function ResultCard({
           </button>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         <div className="space-y-2">
           {result.correctAnswers.map((correct, i) => {
             const userAnswer = result.userAnswers[i] || ""
@@ -49,11 +49,11 @@ export function ResultCard({
               userAnswer.toLowerCase().trim() === correct.toLowerCase().trim()
 
             return (
-              <div key={i} className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Blank {i + 1}:</span>
+              <div key={i} className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="text-muted-foreground shrink-0">Blank {i + 1}:</span>
                 <span
                   className={cn(
-                    "font-medium px-1.5 py-0.5 rounded",
+                    "font-medium px-2 py-0.5 rounded-md",
                     isCorrect
                       ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300"
                       : "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
@@ -74,7 +74,7 @@ export function ResultCard({
           })}
         </div>
 
-        <div className="flex items-center justify-between pt-1 border-t">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
           <span className="text-sm text-muted-foreground">
             {correctCount}/{totalBlanks} blanks correct
           </span>
