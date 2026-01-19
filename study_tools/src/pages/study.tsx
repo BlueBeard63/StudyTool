@@ -17,6 +17,7 @@ import { TimerDisplay } from "@/components/timer-display"
 import { WordBank } from "@/components/word-bank"
 import { WordBankBlank } from "@/components/word-bank-blank"
 import {
+  createSession,
   fetchQuestionStats,
   fetchSet,
   fetchStudyQuestions,
@@ -70,6 +71,9 @@ export function StudyPage() {
   const [results, setResults] = useState<CheckResult | null>(null)
   const [hintsUsed, setHintsUsed] = useState(0)
   const [hintedBlanks, setHintedBlanks] = useState<Set<number>>(new Set())
+
+  // Session persistence
+  const [sessionStartedAt, setSessionStartedAt] = useState<string | null>(null)
 
   // Word bank mode state
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null)
@@ -224,6 +228,35 @@ export function StudyPage() {
     }
   }, [reviewCountdown, questions, scores])
 
+  // Persist session to backend when completed
+  useEffect(() => {
+    if (session.status !== "completed" || !setId || !sessionStartedAt) return
+    if (session.questionsAnswered === 0) return // Don't save empty sessions
+
+    const completedAt = new Date().toISOString()
+    const duration =
+      session.mode === "timed" && session.timerDuration
+        ? session.timerDuration - (session.timeRemaining ?? 0)
+        : session.startTime
+          ? Math.round((Date.now() - session.startTime) / 1000)
+          : null
+
+    createSession({
+      setId,
+      mode: session.mode,
+      difficulty: session.difficulty,
+      inputMethod: session.inputMethod,
+      duration,
+      startedAt: sessionStartedAt,
+      completedAt,
+      score: session.totalScore,
+      questionsAnswered: session.questionsAnswered,
+      correctCount: session.correctCount,
+    }).catch((e) => {
+      console.error("Failed to persist session:", e)
+    })
+  }, [session.status, setId, sessionStartedAt, session])
+
   const handleStart = useCallback(() => {
     const duration = selectedMode === "timed" ? selectedDuration : null
 
@@ -243,6 +276,9 @@ export function StudyPage() {
     const scoreArray = activeQuestions.map((q) => scores[q.id])
     const firstIndex =
       selectedMode === "timed" ? pickNextIndex(scoreArray, []) : 0
+
+    // Track session start for persistence
+    setSessionStartedAt(new Date().toISOString())
 
     setSession({
       ...createInitialSession(selectedMode, duration, selectedDifficulty, selectedInputMethod),
@@ -415,6 +451,7 @@ export function StudyPage() {
   }, [questions, scores])
 
   const handleRetry = useCallback(() => {
+    setSessionStartedAt(null) // Reset for new session
     setSession(createInitialSession(selectedMode, selectedMode === "timed" ? selectedDuration : null, selectedDifficulty, selectedInputMethod))
   }, [selectedMode, selectedDuration, selectedDifficulty, selectedInputMethod])
 
