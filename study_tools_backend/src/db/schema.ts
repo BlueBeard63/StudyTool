@@ -13,6 +13,7 @@ export function initializeSchema(db: Database.Database): void {
       set_id TEXT NOT NULL,
       question TEXT NOT NULL,
       answer TEXT NOT NULL,
+      bookmarked INTEGER DEFAULT 0,
       FOREIGN KEY (set_id) REFERENCES question_sets(id) ON DELETE CASCADE
     );
 
@@ -28,4 +29,15 @@ export function initializeSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_attempts_question_id ON attempts(question_id);
     CREATE INDEX IF NOT EXISTS idx_attempts_timestamp ON attempts(timestamp);
   `)
+
+  // Migration: Add bookmarked column to existing databases
+  const columnExists = db
+    .prepare(
+      `SELECT COUNT(*) as count FROM pragma_table_info('questions') WHERE name = 'bookmarked'`
+    )
+    .get() as { count: number }
+
+  if (columnExists.count === 0) {
+    db.exec(`ALTER TABLE questions ADD COLUMN bookmarked INTEGER DEFAULT 0`)
+  }
 }
