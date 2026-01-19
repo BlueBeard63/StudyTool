@@ -128,12 +128,20 @@ export interface QuestionStats {
 
 export async function recordAttempt(
   questionId: string,
-  correct: boolean
+  correct: boolean,
+  score?: number
 ): Promise<void> {
+  const body: { questionId: string; correct: boolean; score?: number } = {
+    questionId,
+    correct,
+  }
+  if (score !== undefined) {
+    body.score = score
+  }
   const res = await fetch(`${API_BASE}/attempts`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ questionId, correct }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error("Failed to record attempt")
 }
