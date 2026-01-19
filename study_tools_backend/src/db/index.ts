@@ -4,7 +4,7 @@ import { dirname, join } from "path"
 import { fileURLToPath } from "url"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const dataDir = join(__dirname, "../../data")
+const dataDir = process.env.DATA_DIR || join(__dirname, "../../data")
 
 if (!existsSync(dataDir)) {
   mkdirSync(dataDir, { recursive: true })

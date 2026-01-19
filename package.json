@@ -1,0 +1,11 @@
+{
+  "name": "study-tool-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:backend": "cd study_tools_backend && npm run dev",
+    "dev:frontend": "cd study_tools && npm run dev",
+    "install:all": "cd study_tools_backend && npm install && cd ../study_tools && npm install"
+  }
+}
