@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Flame } from "lucide-react"
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   fetchDailyStats,
   fetchStats,
@@ -49,7 +50,54 @@ export function StatsPage() {
         </div>
       </div>
 
-      {/* Cards and chart will be added in subsequent tasks */}
+      {/* Activity Summary Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Answered
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.total}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Today
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.today}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              This Week
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.thisWeek}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Accuracy
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.accuracy}%</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Chart will be added in subsequent task */}
     </div>
   )
 }
