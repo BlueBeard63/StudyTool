@@ -1,4 +1,15 @@
-const API_BASE = "http://localhost:3001/api"
+declare global {
+    interface Window {
+        __RUNTIME_CONFIG__?: {
+            API_BASE_URL?: string;
+        };
+    }
+}
+
+export const API_BASE =
+    window.__RUNTIME_CONFIG__?.API_BASE_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    "http://localhost:3001/api";
 
 export interface QuestionSet {
   id: string
