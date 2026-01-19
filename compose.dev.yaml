@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: ./study_tools_backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./study_tools_backend/src:/app/src
+      - ${DATA_DIR:-./study_tools_backend/data}:/data
+    environment:
+      - NODE_ENV=development
+      - DATA_DIR=/data
+      - PORT=3001
+
+  frontend:
+    build:
+      context: ./study_tools
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./study_tools/src:/app/src
+      - ./study_tools/public:/app/public
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - backend

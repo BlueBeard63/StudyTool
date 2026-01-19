@@ -9,6 +9,11 @@ function rowToQuestion(row: QuestionRow): Question {
     setId: row.set_id,
     question: row.question,
     answer: row.answer,
+    bookmarked: row.bookmarked === 1,
+    easeFactor: row.ease_factor,
+    repetitions: row.repetitions,
+    intervalDays: row.interval_days,
+    nextReview: row.next_review,
   }
 }
 
@@ -93,6 +98,59 @@ export function deleteById(id: string): boolean {
   const stmt = db.prepare("DELETE FROM questions WHERE id = ?")
   const result = stmt.run(id)
   return result.changes > 0
+}
+
+export function toggleBookmark(id: string, bookmarked: boolean): Question | null {
+  const stmt = db.prepare("UPDATE questions SET bookmarked = ? WHERE id = ?")
+  const result = stmt.run(bookmarked ? 1 : 0, id)
+  if (result.changes === 0) return null
+  return getById(id)
+}
+
+export function getBookmarkedBySetId(setId: string): Question[] {
+  const stmt = db.prepare("SELECT * FROM questions WHERE set_id = ? AND bookmarked = 1")
+  const rows = stmt.all(setId) as QuestionRow[]
+  return rows.map(rowToQuestion)
+}
+
+export function updateSRData(
+  id: string,
+  easeFactor: number,
+  repetitions: number,
+  intervalDays: number,
+  nextReview: string | null
+): Question | null {
+  const stmt = db.prepare(
+    "UPDATE questions SET ease_factor = ?, repetitions = ?, interval_days = ?, next_review = ? WHERE id = ?"
+  )
+  const result = stmt.run(easeFactor, repetitions, intervalDays, nextReview, id)
+  if (result.changes === 0) return null
+  return getById(id)
+}
+
+export function getDueQuestions(setId?: string): Question[] {
+  let query = `SELECT * FROM questions WHERE next_review <= DATE('now') OR next_review IS NULL`
+  const params: string[] = []
+
+  if (setId) {
+    query += ` AND set_id = ?`
+    params.push(setId)
+  }
+
+  query += ` ORDER BY next_review ASC`
+
+  const stmt = db.prepare(query)
+  const rows = stmt.all(...params) as QuestionRow[]
+  return rows.map(rowToQuestion)
+}
+
+export function countDueBySetId(setId: string): number {
+  const stmt = db.prepare(
+    `SELECT COUNT(*) as count FROM questions
+     WHERE set_id = ? AND (next_review <= DATE('now') OR next_review IS NULL)`
+  )
+  const row = stmt.get(setId) as { count: number }
+  return row.count
 }
 
 /**

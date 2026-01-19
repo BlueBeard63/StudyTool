@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
+import { Star } from "lucide-react"
 
 import {
   AlertDialog,
@@ -29,17 +30,35 @@ import {
   fetchQuestionsPaginated,
   fetchQuestionStats,
   fetchSet,
+  toggleQuestionBookmark,
   type Question,
   type QuestionSet,
   updateQuestion,
   updateSet,
 } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
 function getScoreColor(score: number | null): string {
   if (score === null) return "bg-gray-300 dark:bg-gray-600"
   if (score >= 0.7) return "bg-green-500"
   if (score >= 0.3) return "bg-orange-500"
   return "bg-red-500"
+}
+
+function formatNextReview(nextReview: string | null | undefined): string | null {
+  if (!nextReview) return null
+
+  const reviewDate = new Date(nextReview)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  reviewDate.setHours(0, 0, 0, 0)
+
+  const diffDays = Math.floor((reviewDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 0) return "Overdue"
+  if (diffDays === 0) return "Due today"
+  if (diffDays === 1) return "Due tomorrow"
+  return `Due in ${diffDays} days`
 }
 
 export function SetDetailPage() {
@@ -71,6 +90,9 @@ export function SetDetailPage() {
   const [deleteSetOpen, setDeleteSetOpen] = useState(false)
   const [deleteQuestionId, setDeleteQuestionId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  // Bookmarked filter
+  const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false)
 
   // Infinite scroll observer ref
   const observerRef = useRef<HTMLDivElement>(null)
@@ -262,6 +284,41 @@ export function SetDetailPage() {
     setDeleteQuestionId(null)
   }, [deleteQuestionId, set])
 
+  // Toggle bookmark on a question
+  const handleToggleBookmark = useCallback(async (questionId: string) => {
+    const question = questions.find((q) => q.id === questionId)
+    if (!question) return
+    const newBookmarked = !question.bookmarked
+
+    // Optimistic update
+    setQuestions((prev) =>
+      prev.map((q) => (q.id === questionId ? { ...q, bookmarked: newBookmarked } : q))
+    )
+
+    try {
+      await toggleQuestionBookmark(questionId, newBookmarked)
+    } catch (e) {
+      // Revert on error
+      setQuestions((prev) =>
+        prev.map((q) => (q.id === questionId ? { ...q, bookmarked: !newBookmarked } : q))
+      )
+      console.error("Failed to toggle bookmark:", e)
+    }
+  }, [questions])
+
+  // Count of bookmarked questions
+  const bookmarkedCount = useMemo(() => {
+    return questions.filter((q) => q.bookmarked).length
+  }, [questions])
+
+  // Filtered questions based on bookmarked filter
+  const displayedQuestions = useMemo(() => {
+    if (showBookmarkedOnly) {
+      return questions.filter((q) => q.bookmarked)
+    }
+    return questions
+  }, [questions, showBookmarkedOnly])
+
   // Loading state
   if (loading) {
     return <div className="text-muted-foreground">Loading...</div>
@@ -326,8 +383,20 @@ export function SetDetailPage() {
         </div>
       </div>
 
-      {/* Add Question Button */}
-      <Button onClick={openAddQuestion}>+ Add Question</Button>
+      {/* Add Question Button and Bookmarked Filter */}
+      <div className="flex items-center gap-4">
+        <Button onClick={openAddQuestion}>+ Add Question</Button>
+        {bookmarkedCount > 0 && (
+          <Button
+            variant={showBookmarkedOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowBookmarkedOnly(!showBookmarkedOnly)}
+          >
+            <Star className={cn("h-4 w-4 mr-1", showBookmarkedOnly && "fill-current")} />
+            Bookmarked ({bookmarkedCount})
+          </Button>
+        )}
+      </div>
 
       {/* Questions List */}
       <div className="space-y-3">
@@ -337,8 +406,14 @@ export function SetDetailPage() {
               No questions yet. Add your first question!
             </CardContent>
           </Card>
+        ) : displayedQuestions.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              No bookmarked questions. Click the star icon on questions to bookmark them.
+            </CardContent>
+          </Card>
         ) : (
-          questions.map((q) => (
+          displayedQuestions.map((q) => (
             <div key={q.id} className="flex overflow-hidden rounded-lg border">
               {/* Score bar on left side */}
               <div
@@ -351,6 +426,19 @@ export function SetDetailPage() {
                       {q.question}
                     </CardTitle>
                     <div className="flex shrink-0 gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleToggleBookmark(q.id)}
+                        title={q.bookmarked ? "Remove bookmark" : "Bookmark question"}
+                      >
+                        <Star
+                          className={cn(
+                            "h-4 w-4",
+                            q.bookmarked && "fill-yellow-500 text-yellow-500"
+                          )}
+                        />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -371,6 +459,11 @@ export function SetDetailPage() {
                 </CardHeader>
                 <CardContent>
                   <CardDescription className="text-sm">{q.answer}</CardDescription>
+                  {formatNextReview(q.nextReview) && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatNextReview(q.nextReview)}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </div>

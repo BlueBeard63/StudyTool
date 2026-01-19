@@ -1,12 +1,13 @@
 import { Router, type Request, type Response } from "express"
 import * as Attempt from "../models/attempt.js"
 import * as Question from "../models/question.js"
+import { processAttemptSR } from "../lib/sm2.js"
 
 const router = Router()
 
 // POST /api/attempts - Record a study attempt
 router.post("/", (req: Request, res: Response) => {
-  const { questionId, correct } = req.body
+  const { questionId, correct, score, sessionId } = req.body
 
   if (!questionId || typeof questionId !== "string") {
     res.status(400).json({ error: "questionId is required" })
@@ -24,7 +25,20 @@ router.post("/", (req: Request, res: Response) => {
     return
   }
 
-  const attempt = Attempt.create(questionId, correct)
+  // Record the attempt (with optional sessionId)
+  const attempt = Attempt.create(
+    questionId,
+    correct,
+    typeof sessionId === "string" ? sessionId : undefined
+  )
+
+  // Update spaced repetition data
+  // Use provided score if available, otherwise derive from correct boolean
+  const effectiveScore =
+    typeof score === "number" ? score : correct ? 1.0 : 0
+
+  processAttemptSR(questionId, effectiveScore)
+
   res.status(201).json(attempt)
 })
 

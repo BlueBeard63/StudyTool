@@ -1,10 +1,22 @@
-const API_BASE = "http://localhost:3001/api"
+declare global {
+    interface Window {
+        __RUNTIME_CONFIG__?: {
+            API_BASE_URL?: string;
+        };
+    }
+}
+
+export const API_BASE =
+    window.__RUNTIME_CONFIG__?.API_BASE_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    "http://localhost:3001/api";
 
 export interface QuestionSet {
   id: string
   name: string
   createdAt: string
   questionCount: number
+  dueCount?: number
 }
 
 export async function fetchSets(): Promise<QuestionSet[]> {
@@ -42,6 +54,11 @@ export interface Question {
   setId: string
   question: string
   answer: string
+  bookmarked?: boolean
+  easeFactor?: number
+  repetitions?: number
+  intervalDays?: number
+  nextReview?: string | null
 }
 
 export interface QuestionWithScore extends Question {
@@ -81,10 +98,15 @@ export async function fetchQuestionsPaginated(
  */
 export async function fetchStudyQuestions(
   setId: string,
-  limit?: number
+  limit?: number,
+  bookmarkedOnly?: boolean
 ): Promise<QuestionWithScore[]> {
-  const url = limit
-    ? `${API_BASE}/sets/${setId}/study?limit=${limit}`
+  const params = new URLSearchParams()
+  if (limit) params.append("limit", String(limit))
+  if (bookmarkedOnly) params.append("bookmarkedOnly", "true")
+  const queryString = params.toString()
+  const url = queryString
+    ? `${API_BASE}/sets/${setId}/study?${queryString}`
     : `${API_BASE}/sets/${setId}/study`
   const res = await fetch(url)
   if (!res.ok) throw new Error("Failed to fetch study questions")
@@ -96,6 +118,35 @@ export interface Attempt {
   id: string
   correct: boolean
   createdAt: string
+  sessionId?: string | null
+}
+
+// Session types
+export interface Session {
+  id: string
+  setId: string
+  mode: "practice" | "timed"
+  difficulty: "easy" | "medium" | "hard" | "extreme"
+  inputMethod: "typing" | "wordbank"
+  duration: number | null
+  startedAt: string
+  completedAt: string
+  score: number
+  questionsAnswered: number
+  correctCount: number
+}
+
+export interface CreateSessionInput {
+  setId: string
+  mode: Session["mode"]
+  difficulty: Session["difficulty"]
+  inputMethod: Session["inputMethod"]
+  duration: number | null
+  startedAt: string
+  completedAt: string
+  score: number
+  questionsAnswered: number
+  correctCount: number
 }
 
 export interface QuestionStats {
@@ -107,12 +158,29 @@ export interface QuestionStats {
 
 export async function recordAttempt(
   questionId: string,
-  correct: boolean
+  correct: boolean,
+  score?: number,
+  sessionId?: string
 ): Promise<void> {
+  const body: {
+    questionId: string
+    correct: boolean
+    score?: number
+    sessionId?: string
+  } = {
+    questionId,
+    correct,
+  }
+  if (score !== undefined) {
+    body.score = score
+  }
+  if (sessionId !== undefined) {
+    body.sessionId = sessionId
+  }
   const res = await fetch(`${API_BASE}/attempts`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ questionId, correct }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error("Failed to record attempt")
 }
@@ -178,4 +246,102 @@ export async function deleteQuestion(questionId: string): Promise<void> {
     method: "DELETE",
   })
   if (!res.ok) throw new Error("Failed to delete question")
+}
+
+// Bookmark functions
+export async function toggleQuestionBookmark(
+  questionId: string,
+  bookmarked: boolean
+): Promise<Question> {
+  const res = await fetch(`${API_BASE}/questions/${questionId}/bookmark`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bookmarked }),
+  })
+  if (!res.ok) throw new Error("Failed to toggle bookmark")
+  return res.json()
+}
+
+export async function fetchBookmarkedQuestions(
+  setId: string
+): Promise<Question[]> {
+  const res = await fetch(`${API_BASE}/sets/${setId}/bookmarked`)
+  if (!res.ok) throw new Error("Failed to fetch bookmarked questions")
+  return res.json()
+}
+
+// Stats types and functions
+export interface StatsOverview {
+  total: number
+  correct: number
+  accuracy: number
+  streak: number
+  today: number
+  thisWeek: number
+  uniqueQuestions: number
+}
+
+export interface DailyStat {
+  date: string
+  count: number
+  correct: number
+  accuracy: number
+}
+
+export async function fetchStats(): Promise<StatsOverview> {
+  const res = await fetch(`${API_BASE}/stats`)
+  if (!res.ok) throw new Error("Failed to fetch stats")
+  return res.json()
+}
+
+export async function fetchDailyStats(days?: number): Promise<DailyStat[]> {
+  const params = days ? `?days=${days}` : ""
+  const res = await fetch(`${API_BASE}/stats/daily${params}`)
+  if (!res.ok) throw new Error("Failed to fetch daily stats")
+  return res.json()
+}
+
+export async function fetchDueQuestions(setId?: string): Promise<Question[]> {
+  const params = setId ? `?setId=${setId}` : ""
+  const res = await fetch(`${API_BASE}/questions/due${params}`)
+  if (!res.ok) throw new Error("Failed to fetch due questions")
+  return res.json()
+}
+
+// Session functions
+export async function createSession(
+  input: CreateSessionInput
+): Promise<Session> {
+  const res = await fetch(`${API_BASE}/sessions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  })
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.error || "Failed to create session")
+  }
+  return res.json()
+}
+
+export async function fetchSessions(
+  setId?: string,
+  limit?: number
+): Promise<Session[]> {
+  const params = new URLSearchParams()
+  if (setId) params.append("setId", setId)
+  if (limit) params.append("limit", String(limit))
+  const queryString = params.toString()
+  const url = queryString
+    ? `${API_BASE}/sessions?${queryString}`
+    : `${API_BASE}/sessions`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error("Failed to fetch sessions")
+  return res.json()
+}
+
+export async function fetchSession(id: string): Promise<Session> {
+  const res = await fetch(`${API_BASE}/sessions/${id}`)
+  if (!res.ok) throw new Error("Failed to fetch session")
+  return res.json()
 }

@@ -16,6 +16,7 @@ router.get("/", (_req: Request, res: Response) => {
   const setsWithCounts = sets.map((set) => ({
     ...set,
     questionCount: QuestionSet.getQuestionCount(set.id),
+    dueCount: Question.countDueBySetId(set.id),
   }))
   res.json(setsWithCounts)
 })
@@ -135,6 +136,18 @@ router.post("/:id/questions", (req: Request<IdParams>, res: Response) => {
   res.status(201).json(newQuestion)
 })
 
+// GET /api/sets/:id/bookmarked - Get bookmarked questions for a set
+router.get("/:id/bookmarked", (req: Request<IdParams>, res: Response) => {
+  const set = QuestionSet.getById(req.params.id)
+  if (!set) {
+    res.status(404).json({ error: "Question set not found" })
+    return
+  }
+
+  const bookmarked = Question.getBookmarkedBySetId(req.params.id)
+  res.json(bookmarked)
+})
+
 // GET /api/sets/:id/study - Get questions in smart order with scores
 router.get("/:id/study", (req: Request<IdParams>, res: Response) => {
   const set = QuestionSet.getById(req.params.id)
@@ -143,8 +156,16 @@ router.get("/:id/study", (req: Request<IdParams>, res: Response) => {
     return
   }
 
+  // Check if bookmarkedOnly filter is requested
+  const bookmarkedOnly = req.query.bookmarkedOnly === "true"
+
   // Get questions with their scores
-  const questionsWithScores = Question.getBySetIdWithScores(req.params.id)
+  let questionsWithScores = Question.getBySetIdWithScores(req.params.id)
+
+  // Filter to bookmarked only if requested
+  if (bookmarkedOnly) {
+    questionsWithScores = questionsWithScores.filter((q) => q.bookmarked)
+  }
 
   // Apply smart ordering (prioritizes low/null scores)
   const scores = questionsWithScores.map((q) => q.score)
