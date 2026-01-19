@@ -8,17 +8,22 @@ function rowToAttempt(row: AttemptRow): Attempt {
     questionId: row.question_id,
     correct: row.correct === 1,
     timestamp: row.timestamp,
+    sessionId: row.session_id,
   }
 }
 
-export function create(questionId: string, correct: boolean): Attempt {
+export function create(
+  questionId: string,
+  correct: boolean,
+  sessionId?: string
+): Attempt {
   const id = uuidv4()
   const timestamp = new Date().toISOString()
   const stmt = db.prepare(
-    "INSERT INTO attempts (id, question_id, correct, timestamp) VALUES (?, ?, ?, ?)"
+    "INSERT INTO attempts (id, question_id, correct, timestamp, session_id) VALUES (?, ?, ?, ?, ?)"
   )
-  stmt.run(id, questionId, correct ? 1 : 0, timestamp)
-  return { id, questionId, correct, timestamp }
+  stmt.run(id, questionId, correct ? 1 : 0, timestamp, sessionId ?? null)
+  return { id, questionId, correct, timestamp, sessionId }
 }
 
 export function getRecentByQuestionId(
