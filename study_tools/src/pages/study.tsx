@@ -501,7 +501,7 @@ export function StudyPage() {
             {selectedMode === "timed" && (
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
-                  {[60, 180, 300].map((duration) => (
+                  {[60, 180, 300, 600, 900].map((duration) => (
                     <Button
                       key={duration}
                       variant={selectedDuration === duration && !showCustomInput ? "default" : "outline"}
@@ -522,7 +522,7 @@ export function StudyPage() {
                   >
                     Custom
                   </Button>
-                  {showCustomInput && ![60, 180, 300].includes(selectedDuration) && (
+                  {showCustomInput && ![60, 180, 300, 600, 900].includes(selectedDuration) && (
                     <span className="inline-flex items-center px-2 py-1 text-sm font-medium bg-primary text-primary-foreground rounded">
                       {selectedDuration / 60} min
                     </span>
