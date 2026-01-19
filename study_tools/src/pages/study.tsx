@@ -376,9 +376,9 @@ export function StudyPage() {
       setReviewCountdown(hasWrong ? 30 : 15)
     }
 
-    // Record to backend
+    // Record to backend (with score for spaced repetition updates)
     try {
-      await recordAttempt(currentQuestion.id, isCorrect)
+      await recordAttempt(currentQuestion.id, isCorrect, checkResult.score)
       if (session.mode === "practice") {
         const stats = await fetchQuestionStats(currentQuestion.id)
         setScores((prev) => ({ ...prev, [currentQuestion.id]: stats.score }))
