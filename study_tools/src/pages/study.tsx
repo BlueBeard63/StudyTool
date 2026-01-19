@@ -58,6 +58,8 @@ export function StudyPage() {
   const [selectedInputMethod, setSelectedInputMethod] = useState<InputMethod>("typing")
   const [selectedQuestionCount, setSelectedQuestionCount] = useState<number | null>(32) // null = All
   const [selectedBookmarkedOnly, setSelectedBookmarkedOnly] = useState(false)
+  const [showCustomInput, setShowCustomInput] = useState(false)
+  const [customMinutes, setCustomMinutes] = useState<string>("")
 
   // Session state
   const [session, setSession] = useState<SessionState>(createInitialSession)
@@ -497,17 +499,60 @@ export function StudyPage() {
             </div>
 
             {selectedMode === "timed" && (
-              <div className="flex gap-2">
-                {[60, 180, 300].map((duration) => (
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {[60, 180, 300].map((duration) => (
+                    <Button
+                      key={duration}
+                      variant={selectedDuration === duration && !showCustomInput ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setSelectedDuration(duration)
+                        setShowCustomInput(false)
+                        setCustomMinutes("")
+                      }}
+                    >
+                      {duration / 60} min
+                    </Button>
+                  ))}
                   <Button
-                    key={duration}
-                    variant={selectedDuration === duration ? "default" : "outline"}
+                    variant={showCustomInput ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setSelectedDuration(duration)}
+                    onClick={() => setShowCustomInput(true)}
                   >
-                    {duration / 60} min
+                    Custom
                   </Button>
-                ))}
+                </div>
+                {showCustomInput && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="120"
+                      value={customMinutes}
+                      onChange={(e) => setCustomMinutes(e.target.value)}
+                      placeholder="Minutes (1-120)"
+                      className="w-32 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const mins = parseInt(customMinutes, 10)
+                        if (mins >= 1 && mins <= 120) {
+                          setSelectedDuration(mins * 60)
+                        }
+                      }}
+                      disabled={!customMinutes || parseInt(customMinutes, 10) < 1 || parseInt(customMinutes, 10) > 120}
+                    >
+                      Set
+                    </Button>
+                    {customMinutes && parseInt(customMinutes, 10) >= 1 && parseInt(customMinutes, 10) <= 120 && (
+                      <span className="text-sm text-muted-foreground">
+                        = {parseInt(customMinutes, 10)} min
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
