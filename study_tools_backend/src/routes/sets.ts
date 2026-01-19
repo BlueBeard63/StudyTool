@@ -135,6 +135,18 @@ router.post("/:id/questions", (req: Request<IdParams>, res: Response) => {
   res.status(201).json(newQuestion)
 })
 
+// GET /api/sets/:id/bookmarked - Get bookmarked questions for a set
+router.get("/:id/bookmarked", (req: Request<IdParams>, res: Response) => {
+  const set = QuestionSet.getById(req.params.id)
+  if (!set) {
+    res.status(404).json({ error: "Question set not found" })
+    return
+  }
+
+  const bookmarked = Question.getBookmarkedBySetId(req.params.id)
+  res.json(bookmarked)
+})
+
 // GET /api/sets/:id/study - Get questions in smart order with scores
 router.get("/:id/study", (req: Request<IdParams>, res: Response) => {
   const set = QuestionSet.getById(req.params.id)
