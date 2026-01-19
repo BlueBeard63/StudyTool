@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card"
 import { FillInBlank } from "@/components/fill-in-blank"
 import { ScoreDot } from "@/components/score-dot"
-import { SessionSummary } from "@/components/session-summary"
+import { SessionResults } from "@/components/session-results"
 import { TimerDisplay } from "@/components/timer-display"
 import { WordBank } from "@/components/word-bank"
 import { WordBankBlank } from "@/components/word-bank-blank"
@@ -422,18 +422,20 @@ export function StudyPage() {
     navigate("/")
   }, [navigate])
 
-  const handleToggleBookmark = useCallback(async () => {
-    if (!currentQuestion) return
-    const newBookmarked = !bookmarks[currentQuestion.id]
+  const handleToggleBookmark = useCallback(async (questionId?: string) => {
+    // Use provided questionId or fall back to currentQuestion.id
+    const targetId = questionId ?? currentQuestion?.id
+    if (!targetId) return
+    const newBookmarked = !bookmarks[targetId]
 
     // Optimistic update
-    setBookmarks((prev) => ({ ...prev, [currentQuestion.id]: newBookmarked }))
+    setBookmarks((prev) => ({ ...prev, [targetId]: newBookmarked }))
 
     try {
-      await toggleQuestionBookmark(currentQuestion.id, newBookmarked)
+      await toggleQuestionBookmark(targetId, newBookmarked)
     } catch (e) {
       // Revert on error
-      setBookmarks((prev) => ({ ...prev, [currentQuestion.id]: !newBookmarked }))
+      setBookmarks((prev) => ({ ...prev, [targetId]: !newBookmarked }))
       console.error("Failed to toggle bookmark:", e)
     }
   }, [currentQuestion, bookmarks])
@@ -644,12 +646,17 @@ export function StudyPage() {
     )
   }
 
-  // Session completed - show summary
+  // Session completed - show results
   if (session.status === "completed") {
     return (
       <div className="space-y-6">
-        <SessionSummary
-          session={session}
+        <SessionResults
+          results={session.results}
+          bookmarks={bookmarks}
+          onToggleBookmark={handleToggleBookmark}
+          mode={session.mode}
+          timerDuration={session.timerDuration}
+          startTime={session.startTime}
           setName={questionSet?.name ?? "Study Set"}
           onRetry={handleRetry}
           onBack={handleBack}
