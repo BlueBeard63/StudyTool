@@ -17,7 +17,7 @@ services:
       context: ./study_tools_backend
       dockerfile: Dockerfile.prod
     ports:
-      - "3001:3001"
+      - "56173:3001"
     volumes:
       # Data volume only - no source mounts for production
       - ${DATA_DIR:-./study_tools_backend/data}:/data
@@ -31,10 +31,10 @@ services:
       context: ./study_tools
       dockerfile: Dockerfile.prod
     ports:
-      - "80:80"
+      - "56174:80"
     environment:
       # API URL can be overridden at runtime
       # Default points to backend container via localhost (for same-host deployment)
-      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3001/api}
+      - VITE_API_BASE_URL=http://localhost:56173/api
     depends_on:
       - backend

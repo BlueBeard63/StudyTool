@@ -118,6 +118,35 @@ export interface Attempt {
   id: string
   correct: boolean
   createdAt: string
+  sessionId?: string | null
+}
+
+// Session types
+export interface Session {
+  id: string
+  setId: string
+  mode: "practice" | "timed"
+  difficulty: "easy" | "medium" | "hard" | "extreme"
+  inputMethod: "typing" | "wordbank"
+  duration: number | null
+  startedAt: string
+  completedAt: string
+  score: number
+  questionsAnswered: number
+  correctCount: number
+}
+
+export interface CreateSessionInput {
+  setId: string
+  mode: Session["mode"]
+  difficulty: Session["difficulty"]
+  inputMethod: Session["inputMethod"]
+  duration: number | null
+  startedAt: string
+  completedAt: string
+  score: number
+  questionsAnswered: number
+  correctCount: number
 }
 
 export interface QuestionStats {
@@ -130,14 +159,23 @@ export interface QuestionStats {
 export async function recordAttempt(
   questionId: string,
   correct: boolean,
-  score?: number
+  score?: number,
+  sessionId?: string
 ): Promise<void> {
-  const body: { questionId: string; correct: boolean; score?: number } = {
+  const body: {
+    questionId: string
+    correct: boolean
+    score?: number
+    sessionId?: string
+  } = {
     questionId,
     correct,
   }
   if (score !== undefined) {
     body.score = score
+  }
+  if (sessionId !== undefined) {
+    body.sessionId = sessionId
   }
   const res = await fetch(`${API_BASE}/attempts`, {
     method: "POST",
@@ -267,5 +305,43 @@ export async function fetchDueQuestions(setId?: string): Promise<Question[]> {
   const params = setId ? `?setId=${setId}` : ""
   const res = await fetch(`${API_BASE}/questions/due${params}`)
   if (!res.ok) throw new Error("Failed to fetch due questions")
+  return res.json()
+}
+
+// Session functions
+export async function createSession(
+  input: CreateSessionInput
+): Promise<Session> {
+  const res = await fetch(`${API_BASE}/sessions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  })
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.error || "Failed to create session")
+  }
+  return res.json()
+}
+
+export async function fetchSessions(
+  setId?: string,
+  limit?: number
+): Promise<Session[]> {
+  const params = new URLSearchParams()
+  if (setId) params.append("setId", setId)
+  if (limit) params.append("limit", String(limit))
+  const queryString = params.toString()
+  const url = queryString
+    ? `${API_BASE}/sessions?${queryString}`
+    : `${API_BASE}/sessions`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error("Failed to fetch sessions")
+  return res.json()
+}
+
+export async function fetchSession(id: string): Promise<Session> {
+  const res = await fetch(`${API_BASE}/sessions/${id}`)
+  if (!res.ok) throw new Error("Failed to fetch session")
   return res.json()
 }
