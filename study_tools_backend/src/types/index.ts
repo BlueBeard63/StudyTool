@@ -9,6 +9,7 @@ export interface Question {
   setId: string
   question: string
   answer: string
+  bookmarked?: boolean
 }
 
 export interface Attempt {
@@ -33,6 +34,7 @@ export interface QuestionRow {
   set_id: string
   question: string
   answer: string
+  bookmarked: number
 }
 
 export interface AttemptRow {
