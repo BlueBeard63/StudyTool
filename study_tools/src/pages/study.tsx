@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
+import { Star } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +21,7 @@ import {
   fetchSet,
   fetchStudyQuestions,
   recordAttempt,
+  toggleQuestionBookmark,
   type Question,
   type QuestionSet,
   type QuestionWithScore,
@@ -46,6 +48,7 @@ export function StudyPage() {
   const [questionSet, setQuestionSet] = useState<QuestionSet | null>(null)
   const [questions, setQuestions] = useState<QuestionWithScore[]>([])
   const [scores, setScores] = useState<Record<string, number | null>>({})
+  const [bookmarks, setBookmarks] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -136,12 +139,15 @@ export function StudyPage() {
         setQuestionSet(set)
         setQuestions(questionsWithScores)
 
-        // Extract scores from response
+        // Extract scores and bookmarks from response
         const scoreMap: Record<string, number | null> = {}
+        const bookmarkMap: Record<string, boolean> = {}
         questionsWithScores.forEach((q) => {
           scoreMap[q.id] = q.score
+          bookmarkMap[q.id] = q.bookmarked ?? false
         })
         setScores(scoreMap)
+        setBookmarks(bookmarkMap)
         setLoading(false)
       })
       .catch((e) => {
@@ -399,6 +405,22 @@ export function StudyPage() {
     navigate("/")
   }, [navigate])
 
+  const handleToggleBookmark = useCallback(async () => {
+    if (!currentQuestion) return
+    const newBookmarked = !bookmarks[currentQuestion.id]
+
+    // Optimistic update
+    setBookmarks((prev) => ({ ...prev, [currentQuestion.id]: newBookmarked }))
+
+    try {
+      await toggleQuestionBookmark(currentQuestion.id, newBookmarked)
+    } catch (e) {
+      // Revert on error
+      setBookmarks((prev) => ({ ...prev, [currentQuestion.id]: !newBookmarked }))
+      console.error("Failed to toggle bookmark:", e)
+    }
+  }, [currentQuestion, bookmarks])
+
   // Loading state
   if (loading) {
     return <div className="text-muted-foreground">Loading questions...</div>
@@ -601,11 +623,25 @@ export function StudyPage() {
             <CardTitle className="text-base font-medium">
               {currentQuestion.question}
             </CardTitle>
-            <span className="text-sm text-muted-foreground">
-              {session.mode === "timed"
-                ? `#${session.questionsAnswered + 1}`
-                : `${session.currentIndex + 1} / ${effectiveQuestionCount}`}
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleToggleBookmark}
+                className="text-muted-foreground hover:text-yellow-500 transition-colors"
+                title={bookmarks[currentQuestion.id] ? "Remove bookmark" : "Bookmark question"}
+              >
+                <Star
+                  className={cn(
+                    "h-5 w-5",
+                    bookmarks[currentQuestion.id] && "fill-yellow-500 text-yellow-500"
+                  )}
+                />
+              </button>
+              <span className="text-sm text-muted-foreground">
+                {session.mode === "timed"
+                  ? `#${session.questionsAnswered + 1}`
+                  : `${session.currentIndex + 1} / ${effectiveQuestionCount}`}
+              </span>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
