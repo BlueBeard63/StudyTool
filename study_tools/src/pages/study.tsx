@@ -719,7 +719,7 @@ export function StudyPage() {
             </CardTitle>
             <div className="flex items-center gap-2">
               <button
-                onClick={handleToggleBookmark}
+                onClick={() => handleToggleBookmark()}
                 className="text-muted-foreground hover:text-yellow-500 transition-colors"
                 title={bookmarks[currentQuestion.id] ? "Remove bookmark" : "Bookmark question"}
               >
