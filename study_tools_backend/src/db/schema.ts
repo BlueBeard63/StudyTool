@@ -14,6 +14,10 @@ export function initializeSchema(db: Database.Database): void {
       question TEXT NOT NULL,
       answer TEXT NOT NULL,
       bookmarked INTEGER DEFAULT 0,
+      ease_factor REAL DEFAULT 2.5,
+      repetitions INTEGER DEFAULT 0,
+      interval_days INTEGER DEFAULT 0,
+      next_review TEXT,
       FOREIGN KEY (set_id) REFERENCES question_sets(id) ON DELETE CASCADE
     );
 
@@ -31,13 +35,27 @@ export function initializeSchema(db: Database.Database): void {
   `)
 
   // Migration: Add bookmarked column to existing databases
-  const columnExists = db
+  const bookmarkedExists = db
     .prepare(
       `SELECT COUNT(*) as count FROM pragma_table_info('questions') WHERE name = 'bookmarked'`
     )
     .get() as { count: number }
 
-  if (columnExists.count === 0) {
+  if (bookmarkedExists.count === 0) {
     db.exec(`ALTER TABLE questions ADD COLUMN bookmarked INTEGER DEFAULT 0`)
+  }
+
+  // Migration: Add spaced repetition columns to existing databases
+  const easeFactorExists = db
+    .prepare(
+      `SELECT COUNT(*) as count FROM pragma_table_info('questions') WHERE name = 'ease_factor'`
+    )
+    .get() as { count: number }
+
+  if (easeFactorExists.count === 0) {
+    db.exec(`ALTER TABLE questions ADD COLUMN ease_factor REAL DEFAULT 2.5`)
+    db.exec(`ALTER TABLE questions ADD COLUMN repetitions INTEGER DEFAULT 0`)
+    db.exec(`ALTER TABLE questions ADD COLUMN interval_days INTEGER DEFAULT 0`)
+    db.exec(`ALTER TABLE questions ADD COLUMN next_review TEXT`)
   }
 }
