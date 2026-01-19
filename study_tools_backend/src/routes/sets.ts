@@ -155,8 +155,16 @@ router.get("/:id/study", (req: Request<IdParams>, res: Response) => {
     return
   }
 
+  // Check if bookmarkedOnly filter is requested
+  const bookmarkedOnly = req.query.bookmarkedOnly === "true"
+
   // Get questions with their scores
-  const questionsWithScores = Question.getBySetIdWithScores(req.params.id)
+  let questionsWithScores = Question.getBySetIdWithScores(req.params.id)
+
+  // Filter to bookmarked only if requested
+  if (bookmarkedOnly) {
+    questionsWithScores = questionsWithScores.filter((q) => q.bookmarked)
+  }
 
   // Apply smart ordering (prioritizes low/null scores)
   const scores = questionsWithScores.map((q) => q.score)
