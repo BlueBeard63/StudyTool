@@ -27,12 +27,20 @@ import {
   deleteQuestion,
   deleteSet,
   fetchQuestionsPaginated,
+  fetchQuestionStats,
   fetchSet,
   type Question,
   type QuestionSet,
   updateQuestion,
   updateSet,
 } from "@/lib/api"
+
+function getScoreColor(score: number | null): string {
+  if (score === null) return "bg-gray-300 dark:bg-gray-600"
+  if (score >= 0.7) return "bg-green-500"
+  if (score >= 0.3) return "bg-orange-500"
+  return "bg-red-500"
+}
 
 export function SetDetailPage() {
   const { setId } = useParams<{ setId: string }>()
@@ -41,6 +49,7 @@ export function SetDetailPage() {
   // Set data
   const [set, setSet] = useState<QuestionSet | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
+  const [scores, setScores] = useState<Record<string, number | null>>({})
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -66,22 +75,42 @@ export function SetDetailPage() {
   // Infinite scroll observer ref
   const observerRef = useRef<HTMLDivElement>(null)
 
+  // Ref to break useEffect dependency cycle for loadMore
+  const loadMoreRef = useRef<() => void>(() => {})
+
+  // Fetch scores for a list of questions
+  const fetchScoresForQuestions = useCallback(async (qs: Question[]) => {
+    const statsPromises = qs.map((q) =>
+      fetchQuestionStats(q.id).catch(() => null)
+    )
+    const statsResults = await Promise.all(statsPromises)
+    const scoreMap: Record<string, number | null> = {}
+    qs.forEach((q, i) => {
+      scoreMap[q.id] = statsResults[i]?.score ?? null
+    })
+    return scoreMap
+  }, [])
+
   // Fetch initial data
   useEffect(() => {
     if (!setId) return
 
     Promise.all([fetchSet(setId), fetchQuestionsPaginated(setId, 0, 32)])
-      .then(([setData, questionsData]) => {
+      .then(async ([setData, questionsData]) => {
         setSet(setData)
         setQuestions(questionsData.questions)
         setTotal(questionsData.total)
+
+        // Fetch scores for initial questions
+        const scoreMap = await fetchScoresForQuestions(questionsData.questions)
+        setScores(scoreMap)
         setLoading(false)
       })
       .catch((e) => {
         setError(e.message)
         setLoading(false)
       })
-  }, [setId])
+  }, [setId, fetchScoresForQuestions])
 
   const loadMore = useCallback(async () => {
     if (!setId || loadingMore) return
@@ -89,11 +118,18 @@ export function SetDetailPage() {
     try {
       const result = await fetchQuestionsPaginated(setId, questions.length, 32)
       setQuestions((prev) => [...prev, ...result.questions])
+
+      // Fetch scores for newly loaded questions
+      const newScores = await fetchScoresForQuestions(result.questions)
+      setScores((prev) => ({ ...prev, ...newScores }))
     } catch (e) {
       console.error("Failed to load more questions:", e)
     }
     setLoadingMore(false)
-  }, [setId, questions.length, loadingMore])
+  }, [setId, questions.length, loadingMore, fetchScoresForQuestions])
+
+  // Keep ref updated with latest loadMore
+  loadMoreRef.current = loadMore
 
   // Infinite scroll
   useEffect(() => {
@@ -101,8 +137,8 @@ export function SetDetailPage() {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loadingMore) {
-          loadMore()
+        if (entries[0].isIntersecting) {
+          loadMoreRef.current()
         }
       },
       { threshold: 0.1 }
@@ -110,7 +146,7 @@ export function SetDetailPage() {
 
     observer.observe(observerRef.current)
     return () => observer.disconnect()
-  }, [questions.length, total, loadingMore, loadMore])
+  }, [questions.length, total, loadingMore])
 
   // Focus name input when editing
   useEffect(() => {
@@ -303,48 +339,54 @@ export function SetDetailPage() {
           </Card>
         ) : (
           questions.map((q) => (
-            <Card key={q.id}>
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-sm font-medium">
-                    {q.question}
-                  </CardTitle>
-                  <div className="flex shrink-0 gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditQuestion(q)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => setDeleteQuestionId(q.id)}
-                    >
-                      Delete
-                    </Button>
+            <div key={q.id} className="flex overflow-hidden rounded-lg border">
+              {/* Score bar on left side */}
+              <div
+                className={`w-1.5 shrink-0 ${getScoreColor(scores[q.id] ?? null)}`}
+              />
+              <Card className="flex-1 rounded-none border-0 ring-0">
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-sm font-medium">
+                      {q.question}
+                    </CardTitle>
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditQuestion(q)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => setDeleteQuestionId(q.id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-sm">{q.answer}</CardDescription>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-sm">{q.answer}</CardDescription>
+                </CardContent>
+              </Card>
+            </div>
           ))
         )}
 
         {/* Infinite scroll sentinel */}
         {questions.length < total && (
           <div ref={observerRef} className="flex justify-center py-4">
-            {loadingMore ? (
-              <span className="text-muted-foreground">Loading more...</span>
-            ) : (
-              <span className="text-muted-foreground">
-                Scroll to load more ({questions.length} of {total})
-              </span>
-            )}
+            <Button
+              variant="outline"
+              onClick={() => loadMoreRef.current()}
+              disabled={loadingMore}
+            >
+              {loadingMore ? "Loading..." : "Load More"}
+            </Button>
           </div>
         )}
       </div>
