@@ -16,6 +16,7 @@ import { SessionResults } from "@/components/session-results"
 import { WordBank } from "@/components/word-bank"
 import { WordBankBlank } from "@/components/word-bank-blank"
 import {
+  createSession,
   fetchDueQuestions,
   fetchQuestionStats,
   recordAttempt,
@@ -58,6 +59,9 @@ export function ReviewPage() {
   const [results, setResults] = useState<CheckResult | null>(null)
   const [hintsUsed, setHintsUsed] = useState(0)
   const [hintedBlanks, setHintedBlanks] = useState<Set<number>>(new Set())
+
+  // Session persistence
+  const [sessionStartedAt, setSessionStartedAt] = useState<string | null>(null)
 
   // Word bank mode state
   const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null)
@@ -137,7 +141,39 @@ export function ReviewPage() {
     setWordToBlankMap(new Map())
   }, [tokens])
 
+  // Persist session to backend when completed
+  // For review sessions across multiple sets, use the first question's setId
+  useEffect(() => {
+    if (session.status !== "completed" || !sessionStartedAt) return
+    if (session.questionsAnswered === 0) return
+    if (questions.length === 0) return
+
+    // Use the first question's setId for the session record
+    const primarySetId = questions[0].setId
+
+    const completedAt = new Date().toISOString()
+    const duration = session.startTime
+      ? Math.round((Date.now() - session.startTime) / 1000)
+      : null
+
+    createSession({
+      setId: primarySetId,
+      mode: "practice", // Review is always practice mode
+      difficulty: session.difficulty,
+      inputMethod: session.inputMethod,
+      duration,
+      startedAt: sessionStartedAt,
+      completedAt,
+      score: session.totalScore,
+      questionsAnswered: session.questionsAnswered,
+      correctCount: session.correctCount,
+    }).catch((e) => {
+      console.error("Failed to persist session:", e)
+    })
+  }, [session.status, sessionStartedAt, session, questions])
+
   const handleStart = useCallback(() => {
+    setSessionStartedAt(new Date().toISOString())
     setSession({
       ...createInitialSession("practice", null, selectedDifficulty, selectedInputMethod),
       status: "in-progress",
@@ -270,6 +306,7 @@ export function ReviewPage() {
   }, [session.currentIndex, questions.length, selectedQuestionCount])
 
   const handleRetry = useCallback(() => {
+    setSessionStartedAt(null)
     setSession(createInitialSession("practice", null, selectedDifficulty, selectedInputMethod))
   }, [selectedDifficulty, selectedInputMethod])
 
