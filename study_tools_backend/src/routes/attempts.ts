@@ -7,7 +7,7 @@ const router = Router()
 
 // POST /api/attempts - Record a study attempt
 router.post("/", (req: Request, res: Response) => {
-  const { questionId, correct, score } = req.body
+  const { questionId, correct, score, sessionId } = req.body
 
   if (!questionId || typeof questionId !== "string") {
     res.status(400).json({ error: "questionId is required" })
@@ -25,8 +25,12 @@ router.post("/", (req: Request, res: Response) => {
     return
   }
 
-  // Record the attempt
-  const attempt = Attempt.create(questionId, correct)
+  // Record the attempt (with optional sessionId)
+  const attempt = Attempt.create(
+    questionId,
+    correct,
+    typeof sessionId === "string" ? sessionId : undefined
+  )
 
   // Update spaced repetition data
   // Use provided score if available, otherwise derive from correct boolean
