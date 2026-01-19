@@ -113,6 +113,21 @@ export function getBookmarkedBySetId(setId: string): Question[] {
   return rows.map(rowToQuestion)
 }
 
+export function updateSRData(
+  id: string,
+  easeFactor: number,
+  repetitions: number,
+  intervalDays: number,
+  nextReview: string | null
+): Question | null {
+  const stmt = db.prepare(
+    "UPDATE questions SET ease_factor = ?, repetitions = ?, interval_days = ?, next_review = ? WHERE id = ?"
+  )
+  const result = stmt.run(easeFactor, repetitions, intervalDays, nextReview, id)
+  if (result.changes === 0) return null
+  return getById(id)
+}
+
 /**
  * Get all questions for a set with their weighted scores.
  * Efficiently fetches attempts and calculates scores in bulk.
