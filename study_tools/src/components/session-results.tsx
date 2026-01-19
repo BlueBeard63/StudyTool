@@ -18,14 +18,36 @@ interface SessionResultsProps {
   onBack: () => void
 }
 
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${s.toString().padStart(2, "0")}`
+}
+
 export function SessionResults({
   results,
   bookmarks,
   onToggleBookmark,
+  mode,
+  timerDuration,
+  startTime,
+  setName,
   onRetry,
   onBack,
 }: SessionResultsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("all")
+
+  // Calculate overall stats
+  const totalScore = results.length > 0
+    ? results.reduce((sum, r) => sum + r.score, 0) / results.length
+    : 0
+  const percentage = Math.round(totalScore * 100)
+
+  // Calculate time used for timed mode
+  const timeUsed =
+    mode === "timed" && timerDuration !== null && startTime !== null
+      ? Math.floor((Date.now() - startTime) / 1000)
+      : null
 
   // Filtering logic:
   // - Correct: score === 1 (all blanks correct)
@@ -63,8 +85,31 @@ export function SessionResults({
 
   return (
     <div className="space-y-6">
+      {/* Summary stats header */}
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold">
+          {mode === "timed" ? "Time's Up!" : "Session Complete!"}
+        </h2>
+        <p className="text-sm text-muted-foreground">{setName}</p>
+        <div className="text-5xl font-bold">{percentage}%</div>
+        <div className="text-muted-foreground">
+          {correctCount} of {results.length} fully correct
+        </div>
+        {mode === "timed" && timeUsed !== null && (
+          <div className="text-sm text-muted-foreground">
+            Time: {formatDuration(timeUsed)}
+          </div>
+        )}
+        <div className="h-3 overflow-hidden rounded-full bg-muted max-w-md mx-auto">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-500"
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+      </div>
+
       {/* Tab buttons */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 justify-center">
         {tabs.map((tab) => (
           <Button
             key={tab.key}
