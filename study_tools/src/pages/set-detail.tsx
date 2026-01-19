@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router"
 import { Star } from "lucide-react"
 
@@ -74,6 +74,9 @@ export function SetDetailPage() {
   const [deleteSetOpen, setDeleteSetOpen] = useState(false)
   const [deleteQuestionId, setDeleteQuestionId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  // Bookmarked filter
+  const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false)
 
   // Infinite scroll observer ref
   const observerRef = useRef<HTMLDivElement>(null)
@@ -287,6 +290,19 @@ export function SetDetailPage() {
     }
   }, [questions])
 
+  // Count of bookmarked questions
+  const bookmarkedCount = useMemo(() => {
+    return questions.filter((q) => q.bookmarked).length
+  }, [questions])
+
+  // Filtered questions based on bookmarked filter
+  const displayedQuestions = useMemo(() => {
+    if (showBookmarkedOnly) {
+      return questions.filter((q) => q.bookmarked)
+    }
+    return questions
+  }, [questions, showBookmarkedOnly])
+
   // Loading state
   if (loading) {
     return <div className="text-muted-foreground">Loading...</div>
@@ -351,8 +367,20 @@ export function SetDetailPage() {
         </div>
       </div>
 
-      {/* Add Question Button */}
-      <Button onClick={openAddQuestion}>+ Add Question</Button>
+      {/* Add Question Button and Bookmarked Filter */}
+      <div className="flex items-center gap-4">
+        <Button onClick={openAddQuestion}>+ Add Question</Button>
+        {bookmarkedCount > 0 && (
+          <Button
+            variant={showBookmarkedOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowBookmarkedOnly(!showBookmarkedOnly)}
+          >
+            <Star className={cn("h-4 w-4 mr-1", showBookmarkedOnly && "fill-current")} />
+            Bookmarked ({bookmarkedCount})
+          </Button>
+        )}
+      </div>
 
       {/* Questions List */}
       <div className="space-y-3">
@@ -362,8 +390,14 @@ export function SetDetailPage() {
               No questions yet. Add your first question!
             </CardContent>
           </Card>
+        ) : displayedQuestions.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              No bookmarked questions. Click the star icon on questions to bookmark them.
+            </CardContent>
+          </Card>
         ) : (
-          questions.map((q) => (
+          displayedQuestions.map((q) => (
             <div key={q.id} className="flex overflow-hidden rounded-lg border">
               {/* Score bar on left side */}
               <div
