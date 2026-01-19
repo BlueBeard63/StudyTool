@@ -54,6 +54,10 @@ export interface Question {
   question: string
   answer: string
   bookmarked?: boolean
+  easeFactor?: number
+  repetitions?: number
+  intervalDays?: number
+  nextReview?: string | null
 }
 
 export interface QuestionWithScore extends Question {
@@ -247,5 +251,12 @@ export async function fetchDailyStats(days?: number): Promise<DailyStat[]> {
   const params = days ? `?days=${days}` : ""
   const res = await fetch(`${API_BASE}/stats/daily${params}`)
   if (!res.ok) throw new Error("Failed to fetch daily stats")
+  return res.json()
+}
+
+export async function fetchDueQuestions(setId?: string): Promise<Question[]> {
+  const params = setId ? `?setId=${setId}` : ""
+  const res = await fetch(`${API_BASE}/questions/due${params}`)
+  if (!res.ok) throw new Error("Failed to fetch due questions")
   return res.json()
 }
