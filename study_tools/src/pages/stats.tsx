@@ -156,32 +156,73 @@ function DailyActivityChart({ dailyStats }: { dailyStats: DailyStat[] }) {
     )
   }
 
-  return (
-    <div className="flex h-40 items-end justify-between gap-2">
-      {chartData.map((day) => {
-        const heightPercent = (day.count / maxCount) * 100
-        // Color intensity based on accuracy (green = high, red = low)
-        const opacity = day.count > 0 ? 0.4 + (day.accuracy / 100) * 0.6 : 0.2
+  // Build SVG path for area chart
+  const chartHeight = 120
+  const chartWidth = 100 // percentage-based
+  const points = chartData.map((day, i) => {
+    const x = (i / (chartData.length - 1)) * chartWidth
+    const y = chartHeight - (day.count / maxCount) * chartHeight
+    return { x, y, ...day }
+  })
 
-        return (
-          <div key={day.date} className="flex flex-1 flex-col items-center gap-1">
-            <div className="relative w-full flex-1">
-              <div
-                className="absolute bottom-0 w-full rounded-t transition-all"
-                style={{
-                  height: `${heightPercent}%`,
-                  minHeight: day.count > 0 ? "4px" : "0",
-                  backgroundColor: `rgba(34, 197, 94, ${opacity})`,
-                }}
-                title={`${day.count} attempts, ${day.accuracy}% accuracy`}
-              />
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {formatDayLabel(day.date)}
-            </span>
-          </div>
-        )
-      })}
+  // Create smooth line path
+  const linePath = points
+    .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
+    .join(" ")
+
+  // Create area path (line + close to bottom)
+  const areaPath = `${linePath} L ${chartWidth} ${chartHeight} L 0 ${chartHeight} Z`
+
+  return (
+    <div className="space-y-2">
+      <svg
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        preserveAspectRatio="none"
+        className="h-32 w-full"
+      >
+        {/* Gradient definition */}
+        <defs>
+          <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgb(34, 197, 94)" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="rgb(34, 197, 94)" stopOpacity="0.05" />
+          </linearGradient>
+        </defs>
+
+        {/* Area fill */}
+        <path d={areaPath} fill="url(#areaGradient)" />
+
+        {/* Line stroke */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke="rgb(34, 197, 94)"
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+        />
+
+        {/* Data points */}
+        {points.map((p, i) => (
+          <circle
+            key={i}
+            cx={p.x}
+            cy={p.y}
+            r="3"
+            fill="rgb(34, 197, 94)"
+            vectorEffect="non-scaling-stroke"
+          >
+            <title>{`${p.count} attempts, ${p.accuracy}% accuracy`}</title>
+          </circle>
+        ))}
+      </svg>
+
+      {/* Date labels */}
+      <div className="flex justify-between px-1">
+        {chartData.map((day) => (
+          <span key={day.date} className="text-xs text-muted-foreground">
+            {formatDayLabel(day.date)}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
