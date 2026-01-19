@@ -42,6 +42,7 @@ export interface Question {
   setId: string
   question: string
   answer: string
+  bookmarked?: boolean
 }
 
 export interface QuestionWithScore extends Question {
@@ -81,10 +82,15 @@ export async function fetchQuestionsPaginated(
  */
 export async function fetchStudyQuestions(
   setId: string,
-  limit?: number
+  limit?: number,
+  bookmarkedOnly?: boolean
 ): Promise<QuestionWithScore[]> {
-  const url = limit
-    ? `${API_BASE}/sets/${setId}/study?limit=${limit}`
+  const params = new URLSearchParams()
+  if (limit) params.append("limit", String(limit))
+  if (bookmarkedOnly) params.append("bookmarkedOnly", "true")
+  const queryString = params.toString()
+  const url = queryString
+    ? `${API_BASE}/sets/${setId}/study?${queryString}`
     : `${API_BASE}/sets/${setId}/study`
   const res = await fetch(url)
   if (!res.ok) throw new Error("Failed to fetch study questions")
@@ -178,4 +184,26 @@ export async function deleteQuestion(questionId: string): Promise<void> {
     method: "DELETE",
   })
   if (!res.ok) throw new Error("Failed to delete question")
+}
+
+// Bookmark functions
+export async function toggleQuestionBookmark(
+  questionId: string,
+  bookmarked: boolean
+): Promise<Question> {
+  const res = await fetch(`${API_BASE}/questions/${questionId}/bookmark`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bookmarked }),
+  })
+  if (!res.ok) throw new Error("Failed to toggle bookmark")
+  return res.json()
+}
+
+export async function fetchBookmarkedQuestions(
+  setId: string
+): Promise<Question[]> {
+  const res = await fetch(`${API_BASE}/sets/${setId}/bookmarked`)
+  if (!res.ok) throw new Error("Failed to fetch bookmarked questions")
+  return res.json()
 }
