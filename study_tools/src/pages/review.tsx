@@ -138,17 +138,13 @@ export function ReviewPage() {
   }, [tokens])
 
   const handleStart = useCallback(() => {
-    const effectiveCount = selectedQuestionCount
-      ? Math.min(selectedQuestionCount, questions.length)
-      : questions.length
-
     setSession({
       ...createInitialSession("practice", null, selectedDifficulty, selectedInputMethod),
       status: "in-progress",
       startTime: Date.now(),
       currentIndex: 0,
     })
-  }, [selectedDifficulty, selectedInputMethod, selectedQuestionCount, questions.length])
+  }, [selectedDifficulty, selectedInputMethod])
 
   const handleChange = useCallback((blankIndex: number, value: string) => {
     setValues((prev) => {
@@ -432,6 +428,7 @@ export function ReviewPage() {
           setName="Spaced Repetition Review"
           onRetry={handleRetry}
           onBack={handleBack}
+          showSRFeedback
         />
       </div>
     )

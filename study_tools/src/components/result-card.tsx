@@ -4,16 +4,37 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import type { QuestionResult } from "@/lib/session"
 import { cn } from "@/lib/utils"
 
+function getSRFeedback(score: number): { text: string; className: string } {
+  if (score >= 0.8) {
+    return {
+      text: "Interval increased",
+      className: "text-green-600 dark:text-green-400",
+    }
+  }
+  if (score >= 0.5) {
+    return {
+      text: "Interval maintained",
+      className: "text-yellow-600 dark:text-yellow-400",
+    }
+  }
+  return {
+    text: "Interval reset",
+    className: "text-red-600 dark:text-red-400",
+  }
+}
+
 interface ResultCardProps {
   result: QuestionResult
   bookmarked: boolean
   onToggleBookmark: (id: string) => void
+  showSRFeedback?: boolean
 }
 
 export function ResultCard({
   result,
   bookmarked,
   onToggleBookmark,
+  showSRFeedback = false,
 }: ResultCardProps) {
   const correctCount = result.userAnswers.filter(
     (answer, i) =>
@@ -75,9 +96,16 @@ export function ResultCard({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t">
-          <span className="text-sm text-muted-foreground">
-            {correctCount}/{totalBlanks} blanks correct
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">
+              {correctCount}/{totalBlanks} blanks correct
+            </span>
+            {showSRFeedback && (
+              <span className={cn("text-xs font-medium", getSRFeedback(result.score).className)}>
+                {getSRFeedback(result.score).text}
+              </span>
+            )}
+          </div>
           {result.hintsUsed !== undefined && result.hintsUsed > 0 && (
             <span className="text-xs text-muted-foreground">
               {result.hintsUsed} hint{result.hintsUsed !== 1 ? "s" : ""} used

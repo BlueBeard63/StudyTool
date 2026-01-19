@@ -16,6 +16,7 @@ interface SessionResultsProps {
   setName: string
   onRetry: () => void
   onBack: () => void
+  showSRFeedback?: boolean
 }
 
 function formatDuration(seconds: number): string {
@@ -34,6 +35,7 @@ export function SessionResults({
   setName,
   onRetry,
   onBack,
+  showSRFeedback = false,
 }: SessionResultsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("all")
 
@@ -147,6 +149,7 @@ export function SessionResults({
               result={result}
               bookmarked={bookmarks[result.questionId] ?? false}
               onToggleBookmark={onToggleBookmark}
+              showSRFeedback={showSRFeedback}
             />
           ))
         )}
