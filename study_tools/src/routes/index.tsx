@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router"
 import { RootLayout } from "@/components/layout/root-layout"
 import { SetDetailPage } from "@/pages/set-detail"
 import { SetsPage } from "@/pages/sets"
+import { StatsPage } from "@/pages/stats"
 import { StudyPage } from "@/pages/study"
 
 export const router = createBrowserRouter([
@@ -13,6 +14,7 @@ export const router = createBrowserRouter([
       { index: true, element: <SetsPage /> },
       { path: "sets/:setId", element: <SetDetailPage /> },
       { path: "sets/:setId/study", element: <StudyPage /> },
+      { path: "stats", element: <StatsPage /> },
     ],
   },
 ])

@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router"
+import { Link, Outlet, useNavigate } from "react-router"
 
 import { UploadDialog } from "@/components/upload-dialog"
 
@@ -16,7 +16,17 @@ export function RootLayout() {
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <h1 className="text-lg font-semibold">Study Tool</h1>
+          <div className="flex items-center gap-6">
+            <h1 className="text-lg font-semibold">Study Tool</h1>
+            <nav className="flex gap-4">
+              <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
+                Sets
+              </Link>
+              <Link to="/stats" className="text-sm text-muted-foreground hover:text-foreground">
+                Stats
+              </Link>
+            </nav>
+          </div>
           <UploadDialog onSuccess={handleUploadSuccess} />
         </div>
       </header>
