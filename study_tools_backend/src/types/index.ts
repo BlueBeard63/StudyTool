@@ -10,6 +10,10 @@ export interface Question {
   question: string
   answer: string
   bookmarked?: boolean
+  easeFactor?: number
+  repetitions?: number
+  intervalDays?: number
+  nextReview?: string | null
 }
 
 export interface Attempt {
@@ -35,6 +39,10 @@ export interface QuestionRow {
   question: string
   answer: string
   bookmarked: number
+  ease_factor: number
+  repetitions: number
+  interval_days: number
+  next_review: string | null
 }
 
 export interface AttemptRow {
