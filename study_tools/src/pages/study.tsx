@@ -762,24 +762,34 @@ export function StudyPage() {
             />
           )}
 
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex flex-col gap-2 pt-2">
             {!submitted ? (
               <>
-                {session.inputMethod !== "wordbank" && (
-                  <Button
-                    onClick={handleHint}
-                    variant="outline"
-                    disabled={
-                      // Disable if all blanks filled or hinted
-                      values.every((v, i) => v.trim() || hintedBlanks.has(i)) ||
-                      // In timed mode, disable after 1 hint
-                      (session.mode === "timed" && hintsUsed >= 1)
-                    }
-                  >
-                    Hint
-                  </Button>
+                <div className="flex items-center gap-2">
+                  {session.inputMethod !== "wordbank" && (
+                    <Button
+                      onClick={handleHint}
+                      variant="outline"
+                      disabled={
+                        // Disable if all blanks filled or hinted
+                        values.every((v, i) => v.trim() || hintedBlanks.has(i)) ||
+                        // In timed mode, disable after 1 hint
+                        (session.mode === "timed" && hintsUsed >= 1)
+                      }
+                    >
+                      Hint
+                    </Button>
+                  )}
+                  <Button onClick={handleSubmit}>Check Answers</Button>
+                  <span className="text-sm text-muted-foreground">
+                    {values.filter((v) => v.trim()).length} / {values.length} filled
+                  </span>
+                </div>
+                {values.some((v) => v.trim()) && values.some((v) => !v.trim()) && (
+                  <p className="text-xs text-muted-foreground">
+                    You can submit with empty blanks
+                  </p>
                 )}
-                <Button onClick={handleSubmit}>Check Answer</Button>
               </>
             ) : session.mode === "timed" ? (
               <>
