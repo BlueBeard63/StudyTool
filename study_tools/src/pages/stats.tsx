@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Flame } from "lucide-react"
 
 import {
   fetchDailyStats,
@@ -38,7 +39,17 @@ export function StatsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Stats</h1>
-      {/* Streak, cards, and chart will be added in subsequent tasks */}
+
+      {/* Streak Display */}
+      <div className="flex items-center justify-center gap-3 py-6">
+        <Flame className="h-12 w-12 text-orange-500" />
+        <div className="text-center">
+          <span className="text-5xl font-bold text-orange-500">{stats.streak}</span>
+          <p className="text-sm text-muted-foreground">day streak</p>
+        </div>
+      </div>
+
+      {/* Cards and chart will be added in subsequent tasks */}
     </div>
   )
 }
